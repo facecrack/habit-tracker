@@ -218,42 +218,28 @@
 
 .counter-buttons {
     display: flex;
-    gap: 12px;
-    align-items: center;
+    gap: 8px;
 }
 
 .counter-btn {
-    height: 40px;
-    width: auto;
+    flex: 1;
+    height: 44px;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.counter-btn img {
-    width: 10px;
-    height: 10px;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .counter-btn-minus {
-    width: 48px;
     background: var(--bg-elevated);
-}
-
-.counter-btn-minus img {
-    /* Серый #707070 */
-    filter: brightness(0) saturate(100%) invert(48%);
+    color: var(--text-secondary);
 }
 
 .counter-btn-plus {
-    width: 48px;
     background: var(--brand-lime);
-}
-
-.counter-btn-plus img {
-    /* Чёрный (фон #1D1D1D) — оставляем как есть, иконка уже тёмная */
-    filter: brightness(0);
+    color: #1D1D1D;
 }
 
 .counter-done {
@@ -266,15 +252,6 @@
 
 .counter-done .counter-bar-fill {
     background: var(--brand-lime);
-}
-
-.counter-step {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--text-secondary);
-    text-align: center;
-    white-space: nowrap;
 }
 
 .mood-tooltip {

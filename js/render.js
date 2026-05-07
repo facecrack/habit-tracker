@@ -193,13 +193,8 @@ function renderCounters(counters) {
                         <div class="counter-bar-fill" style="width: 0%;"></div>
                     </div>
                     <div class="counter-buttons">
-                        <button class="counter-btn counter-btn-minus" data-action="counter-decrement">
-                            <img src="icons/minus.svg" alt="Decrease">
-                        </button>
-                        <span class="counter-step">×${habit.step || 1}</span>
-                        <button class="counter-btn counter-btn-plus" data-action="counter-increment">
-                            <img src="icons/plus.svg" alt="Increase">
-                        </button>
+                        <button class="counter-btn counter-btn-minus" data-action="counter-decrement">−${habit.step || 1}</button>
+                        <button class="counter-btn counter-btn-plus" data-action="counter-increment">+${habit.step || 1}</button>
                     </div>
                 </li>
             `;
@@ -228,13 +223,8 @@ function renderCounters(counters) {
                 </div>
 
                 <div class="counter-buttons">
-                    <button class="counter-btn counter-btn-minus" data-action="counter-decrement">
-                        <img src="icons/minus.svg" alt="Decrease">
-                    </button>
-                    <span class="counter-step">×${habit.step || 1}</span>
-                    <button class="counter-btn counter-btn-plus" data-action="counter-increment">
-                        <img src="icons/plus.svg" alt="Increase">
-                    </button>
+                    <button class="counter-btn counter-btn-minus" data-action="counter-decrement">−${habit.step || 1}</button>
+                    <button class="counter-btn counter-btn-plus" data-action="counter-increment">+${habit.step || 1}</button>
                 </div>
             </li>
         `;
