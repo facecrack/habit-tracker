@@ -58,7 +58,9 @@ function toggleReminders() {
     renderSettings();
 
     if (enabling) {
-        notifications.scheduleReminders();
+        notifications.requestPermission().then((granted) => {
+            if (granted) notifications.scheduleReminders();
+        });
     } else {
         notifications.cancelReminders();
     }

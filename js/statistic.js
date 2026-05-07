@@ -108,7 +108,7 @@ function renderStatWeeklyCard(habit) {
                     <div class="stat-week-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
                     <div class="stat-week-text">
                         <p class="stat-week-name">${escapeHtml(habit.name)}</p>
-                        <p class="stat-week-streak">${streak} day streak</p>
+                        <p class="stat-week-streak">${streak > 0 ? `${streak} day streak` : ''}</p>
                     </div>
                 </div>
                 <span class="stat-week-schedule">${formatScheduleShort(habit.schedule)}</span>

@@ -228,12 +228,12 @@ function renderForm() {
     if (!screen) return;
 
     const iconPreview = screen.querySelector('.icon-preview-emoji');
-if (iconPreview) iconPreview.textContent = formState.icon;
+    if (iconPreview) iconPreview.textContent = formState.icon;
 
-const iconPreviewBtn = screen.querySelector('.icon-preview');
-if (iconPreviewBtn) {
-    iconPreviewBtn.style.backgroundColor = pickers.colorToBg(formState.color);
-}
+    const iconPreviewBtn = screen.querySelector('.icon-preview');
+    if (iconPreviewBtn) {
+        iconPreviewBtn.style.backgroundColor = pickers.colorToBg(formState.color);
+    }
 
     const nameInput = screen.querySelector('.form-input-field');
     if (nameInput && nameInput.value !== formState.name) {
