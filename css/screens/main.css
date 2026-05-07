@@ -172,10 +172,23 @@
     font-size: 20px;
 }
 
+.counter-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
 .counter-name {
     font-size: 16px;
     font-weight: 500;
     color: var(--text-primary);
+}
+
+.counter-streak {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
 .counter-progress {

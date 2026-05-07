@@ -245,7 +245,7 @@ if (iconPreviewBtn) {
     if (multiToggle) multiToggle.classList.toggle('toggle-on', formState.reminders.length > 0);
 
     const reminderLabel = screen.querySelector('.reminder-toggle-label');
-    if (reminderLabel) reminderLabel.textContent = formState.reminders.length > 0 ? 'Reminders' : 'Off';
+    if (reminderLabel) reminderLabel.textContent = formState.reminders.length > 0 ? 'On' : 'Off';
 
     const timesList = screen.querySelector('.reminder-times-list');
     if (timesList) {

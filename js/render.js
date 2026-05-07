@@ -183,7 +183,9 @@ function renderCounters(counters) {
                 <li class="counter counter-paused" data-habit-id="${habit.id}" data-action="open-detail">
                     <header class="counter-header">
                         <div class="counter-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
-                        <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                        <div class="counter-header-info">
+                            <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                        </div>
                     </header>
                     <div class="counter-progress">
                         <span class="counter-value counter-value-skipped">Paused</span>
@@ -205,12 +207,17 @@ function renderCounters(counters) {
         const valueClass = isSkipped ? 'counter-value counter-value-skipped' : 'counter-value';
         const isComplete = !isSkipped && value >= target;
         const stateClass = isComplete ? 'counter-done' : isSkipped ? 'counter-skipped' : '';
+        const streak = calculateStreak(habit);
+        const streakHtml = streak > 0 ? `<p class="counter-streak">${streak} day streak</p>` : '';
 
         return `
             <li class="counter ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
                 <header class="counter-header">
                     <div class="counter-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
-                    <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                    <div class="counter-header-info">
+                        <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                        ${streakHtml}
+                    </div>
                 </header>
 
                 <div class="counter-progress">
@@ -441,6 +448,22 @@ function updateCounter(habitId) {
     li.classList.toggle('counter-done', isComplete && !habit.paused);
     li.classList.toggle('counter-skipped', isSkipped && !isComplete && !habit.paused);
     li.classList.toggle('counter-paused', !!habit.paused);
+
+    const info = li.querySelector('.counter-header-info');
+    if (info) {
+        const streak = calculateStreak(habit);
+        let streakEl = info.querySelector('.counter-streak');
+        if (streak > 0) {
+            if (!streakEl) {
+                streakEl = document.createElement('p');
+                streakEl.className = 'counter-streak';
+                info.appendChild(streakEl);
+            }
+            streakEl.textContent = `${streak} day streak`;
+        } else if (streakEl) {
+            streakEl.remove();
+        }
+    }
 }
 
 
