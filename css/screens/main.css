@@ -222,7 +222,6 @@
 }
 
 .counter-btn {
-    flex: 1;
     height: 44px;
     border-radius: var(--radius-md);
     display: flex;
@@ -233,11 +232,15 @@
 }
 
 .counter-btn-minus {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     background: var(--bg-elevated);
     color: var(--text-secondary);
 }
 
 .counter-btn-plus {
+    flex: 1;
     background: var(--brand-lime);
     color: #1D1D1D;
 }
