@@ -162,7 +162,7 @@ function changeStep(delta) {
 }
 
 
-function saveHabit() {
+async function saveHabit() {
     const name = formState.name.trim();
     if (!name) return;
     if (formState.schedule.length === 0) {
@@ -198,10 +198,18 @@ function saveHabit() {
         }
         storage.updateHabit(savedId, habitData);
         editingHabitId = null;
+        if (habitData.reminders.length > 0 && !storage.getSettings().remindersEnabled) {
+            const granted = await notifications.requestPermission();
+            if (granted) storage.updateSettings({ remindersEnabled: true });
+        }
         notifications.scheduleReminders();
         detail.open(savedId);
     } else {
         storage.addHabit(habitData);
+        if (habitData.reminders.length > 0 && !storage.getSettings().remindersEnabled) {
+            const granted = await notifications.requestPermission();
+            if (granted) storage.updateSettings({ remindersEnabled: true });
+        }
         notifications.scheduleReminders();
         if (!storage.getSettings().hintShown) {
             storage.updateSettings({ hintShown: true });

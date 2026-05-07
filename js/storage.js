@@ -13,7 +13,7 @@ const DEFAULT_DATA = {
     habits: [],
     settings: {
         theme: 'default',
-        remindersEnabled: true,
+        remindersEnabled: false,
         sound: 'gentle-chime',
         vibrate: true,
         startWeekOn: 'monday',
@@ -224,7 +224,7 @@ function setEntry(habitId, dateString, value) {
  */
 function getSettings() {
     const data = loadData();
-    return data.settings;
+    return { ...DEFAULT_DATA.settings, ...data.settings };
 }
 
 
