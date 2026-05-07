@@ -244,10 +244,13 @@ if (iconPreviewBtn) {
     const multiToggle = screen.querySelector('.reminder-multi .toggle');
     if (multiToggle) multiToggle.classList.toggle('toggle-on', formState.reminders.length > 0);
 
+    const reminderLabel = screen.querySelector('.reminder-toggle-label');
+    if (reminderLabel) reminderLabel.textContent = formState.reminders.length > 0 ? 'Reminders' : 'Off';
+
     const timesList = screen.querySelector('.reminder-times-list');
     if (timesList) {
         if (formState.reminders.length === 0) {
-            timesList.innerHTML = '<div class="reminder-off-label">Off</div>';
+            timesList.innerHTML = '';
         } else {
             const rows = formState.reminders.map((r, i) => `
                 <div class="reminder-time-row">
@@ -260,11 +263,10 @@ if (iconPreviewBtn) {
                 </div>
             `).join('');
             const addBtn = formState.reminders.length < 3 ? `
-                <div class="reminder-add-row">
-                    <button class="reminder-add-btn" data-action="add-reminder">
-                        <img src="icons/plus.svg" alt="" class="reminder-add-icon">
-                    </button>
-                </div>
+                <button class="reminder-add-btn" data-action="add-reminder">
+                    <img src="icons/plus.svg" alt="" class="reminder-add-icon">
+                    <span>Add reminder</span>
+                </button>
             ` : '';
             timesList.innerHTML = rows + addBtn;
         }
