@@ -247,12 +247,11 @@ if (iconPreviewBtn) {
     const timesList = screen.querySelector('.reminder-times-list');
     if (timesList) {
         if (formState.reminders.length === 0) {
-            timesList.innerHTML = '';
+            timesList.innerHTML = '<div class="reminder-off-label">Off</div>';
         } else {
             const rows = formState.reminders.map((r, i) => `
                 <div class="reminder-time-row">
                     <button class="reminder-time-btn" data-action="open-time-picker" data-reminder-index="${i}">
-                        <img src="icons/bell.svg" alt="" class="reminder-time-icon">
                         <span>${formatReminderTime(r.time)}</span>
                     </button>
                     <button class="reminder-remove-btn" data-action="remove-reminder" data-reminder-index="${i}">
@@ -261,10 +260,11 @@ if (iconPreviewBtn) {
                 </div>
             `).join('');
             const addBtn = formState.reminders.length < 3 ? `
-                <button class="reminder-add-btn" data-action="add-reminder">
-                    <img src="icons/plus.svg" alt="" class="reminder-add-icon">
-                    <span>Add reminder</span>
-                </button>
+                <div class="reminder-add-row">
+                    <button class="reminder-add-btn" data-action="add-reminder">
+                        <img src="icons/plus.svg" alt="" class="reminder-add-icon">
+                    </button>
+                </div>
             ` : '';
             timesList.innerHTML = rows + addBtn;
         }
@@ -335,6 +335,48 @@ function formatReminderTime(time) {
 }
 
 
+function initStepRepeat() {
+    let _holdTimer = null;
+    let _holdInterval = null;
+    let _longPressActive = false;
+    let _holdStartX = 0;
+    let _holdStartY = 0;
+
+    function stopHold() {
+        if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; }
+        if (_holdInterval) { clearInterval(_holdInterval); _holdInterval = null; }
+    }
+
+    document.addEventListener('touchstart', (e) => {
+        const btn = e.target.closest('.step-btn-plus, .step-btn-minus');
+        if (!btn) return;
+        const delta = btn.classList.contains('step-btn-plus') ? 1 : -1;
+        stopHold();
+        _longPressActive = false;
+        _holdStartX = e.touches[0].clientX;
+        _holdStartY = e.touches[0].clientY;
+        _holdTimer = setTimeout(() => {
+            _holdTimer = null;
+            _longPressActive = true;
+            _holdInterval = setInterval(() => changeStep(delta), 150);
+        }, 500);
+    }, { passive: true });
+
+    document.addEventListener('touchend', stopHold, { passive: true });
+    document.addEventListener('touchcancel', stopHold, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!_holdTimer && !_holdInterval) return;
+        const t = e.touches[0];
+        if (Math.hypot(t.clientX - _holdStartX, t.clientY - _holdStartY) > 10) stopHold();
+    }, { passive: true });
+
+    document.addEventListener('click', (e) => {
+        if (_longPressActive) { _longPressActive = false; e.stopPropagation(); }
+    }, true);
+}
+
+
 window.form = {
     state: () => formState,
     open: openNewHabitForm,
@@ -349,5 +391,6 @@ window.form = {
     setName: setName,
     setTarget: setTarget,
     changeStep: changeStep,
+    initStepRepeat: initStepRepeat,
     save: saveHabit
 };

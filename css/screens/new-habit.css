@@ -287,6 +287,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .step-btn {
@@ -440,19 +443,23 @@
     border-top: 1px solid var(--bg-elevated);
 }
 
+.reminder-off-label {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-top: 1px solid var(--bg-elevated);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
 .reminder-time-btn {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
     background: transparent;
     padding: 0;
-}
-
-.reminder-time-icon {
-    width: 16px;
-    height: 16px;
-    filter: brightness(0) saturate(100%) invert(89%) sepia(31%) saturate(1234%) hue-rotate(28deg) brightness(105%) contrast(95%);
 }
 
 .reminder-time-btn span {
@@ -478,27 +485,28 @@
     filter: brightness(0) saturate(100%) invert(48%);
 }
 
-.reminder-add-btn {
+.reminder-add-row {
     height: 48px;
-    padding: 0 16px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    padding: 0 16px;
     border-top: 1px solid var(--bg-elevated);
-    background: transparent;
-    width: 100%;
+}
+
+.reminder-add-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--brand-lime);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .reminder-add-icon {
-    width: 14px;
-    height: 14px;
-    filter: brightness(0) saturate(100%) invert(89%) sepia(31%) saturate(1234%) hue-rotate(28deg) brightness(105%) contrast(95%);
-}
-
-.reminder-add-btn span {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--brand-lime);
+    width: 10px;
+    height: 10px;
+    filter: brightness(0);
 }
 
 

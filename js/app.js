@@ -96,6 +96,7 @@ settings.applyTheme(storage.getSettings().theme);
 render.main();
 dragdrop.init();
 habits.initRepeat();
+form.initStepRepeat();
 
 
 window.showScreen = showScreen;
