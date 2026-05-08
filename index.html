@@ -1097,22 +1097,55 @@
 
     <!-- HINTS -->
     <div class="alert" data-alert="hints" hidden>
-        <h2 class="alert-title">Hidden features</h2>
+        <div class="hint-header">
+            <div class="hint-header-icon">
+                <span class="hint-sparkles-icon"></span>
+            </div>
+            <h2 class="alert-title">Hidden features</h2>
+            <p class="alert-message">A few things you might have missed</p>
+        </div>
         <div class="hint-list">
             <div class="hint-item">
-                <span class="hint-item-icon">✋</span>
-                <p class="hint-item-text">Long-press a habit to drag and reorder it</p>
+                <div class="hint-item-icon-wrap">
+                    <svg class="hint-item-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 10L12 6L16 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 14L12 18L8 14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="hint-item-title">Reorder habits</p>
+                    <p class="hint-item-text">Long-press any habit to drag and reorder</p>
+                </div>
             </div>
             <div class="hint-item">
-                <span class="hint-item-icon">☀️</span>
-                <p class="hint-item-text">Tap mood icons to see your daily score</p>
+                <div class="hint-item-icon-wrap">
+                    <svg class="hint-item-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="9" cy="10.5" r="1.2" fill="currentColor"/>
+                        <circle cx="15" cy="10.5" r="1.2" fill="currentColor"/>
+                        <path d="M8.5 14.5C9.5 16.5 14.5 16.5 15.5 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="hint-item-title">Daily score</p>
+                    <p class="hint-item-text">Tap mood icons to see your daily score</p>
+                </div>
             </div>
             <div class="hint-item">
-                <span class="hint-item-icon">📦</span>
-                <p class="hint-item-text">Archive habits instead of deleting to keep their history</p>
+                <div class="hint-item-icon-wrap">
+                    <svg class="hint-item-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="3" width="20" height="5" rx="2" stroke="currentColor" stroke-width="2"/>
+                        <path d="M4 8V20a1 1 0 001 1h14a1 1 0 001-1V8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M10 13h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="hint-item-title">Archive, don't delete</p>
+                    <p class="hint-item-text">Keep history by archiving habits instead</p>
+                </div>
             </div>
         </div>
-        <div class="alert-actions">
+        <div class="alert-actions hint-actions">
             <button class="alert-btn alert-btn-primary" data-action="cancel-alert">Got it</button>
         </div>
     </div>
