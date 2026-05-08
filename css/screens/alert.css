@@ -125,7 +125,7 @@
 .hint-header-icon {
     width: 64px;
     height: 64px;
-    background: var(--brand-lime);
+    background: var(--brand-lime-25);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -136,7 +136,7 @@
 .hint-sparkles-icon {
     width: 28px;
     height: 28px;
-    background-color: var(--bg-primary);
+    background-color: var(--brand-lime);
     -webkit-mask: url('../../icons/sparkles.svg') no-repeat center / contain;
     mask: url('../../icons/sparkles.svg') no-repeat center / contain;
 }
@@ -175,17 +175,22 @@
     height: 20px;
 }
 
-.hint-item-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 2px;
+.hint-item-icon-mask {
+    width: 20px;
+    height: 20px;
+    background-color: var(--brand-purple);
+    flex-shrink: 0;
+}
+
+.hint-icon-arrows {
+    -webkit-mask: url('../../icons/arrows.svg') no-repeat center / contain;
+    mask: url('../../icons/arrows.svg') no-repeat center / contain;
 }
 
 .hint-item-text {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     line-height: 1.4;
 }
 
