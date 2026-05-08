@@ -64,7 +64,7 @@ function changeCounter(habitId, delta) {
     render.refreshMoods();
 
     if (navigator.vibrate) {
-        navigator.vibrate(goalJustReached && !habit.paused ? [10, 40, 10] : 5);
+        navigator.vibrate(goalJustReached ? [10, 40, 10] : 5);
     }
 
     requestAnimationFrame(() => {

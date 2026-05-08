@@ -203,10 +203,10 @@ function renderCounters(counters) {
         }
 
         const percent = isSkipped ? 0 : Math.min(100, (value / target) * 100);
-        const displayValue = isSkipped ? 'Skipped' : value;
-        const valueClass = isSkipped ? 'counter-value counter-value-skipped' : 'counter-value';
-        const isComplete = !isSkipped && value >= target;
-        const stateClass = isComplete ? 'counter-done' : isSkipped ? 'counter-skipped' : '';
+        const displayValue = value;
+        const valueClass = 'counter-value';
+        const isComplete = value >= target;
+        const stateClass = isComplete ? 'counter-done' : '';
         const streak = calculateStreak(habit);
         const streakHtml = streak > 0 ? `<p class="counter-streak">${streak} day streak</p>` : '';
 
@@ -281,8 +281,8 @@ function renderBinaries(binaries) {
         const isSkipped = todayEntry === 'Skipped';
         const streak = calculateStreak(habit);
 
-        const stateClass = isDone ? 'habit-done' : isSkipped ? 'habit-skipped' : '';
-        const subLabel = isSkipped ? '<p class="habit-streak">Skipped</p>' : streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
+        const stateClass = isDone ? 'habit-done' : '';
+        const subLabel = streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
 
         return `
             <li class="habit ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
