@@ -189,7 +189,7 @@ function renderCounters(counters) {
                     </header>
                     <div class="counter-progress">
                         <span class="counter-value counter-value-skipped">Paused</span>
-                        <span class="counter-target">/ ${target}${habit.unit ? ' ' + escapeHtml(habit.unit) : ''}</span>
+                        <span class="counter-target">/ ${target}${habit.unit ? escapeHtml(habit.unit) : ''}</span>
                     </div>
                     <div class="counter-bar">
                         <div class="counter-bar-fill" style="width: 0%;"></div>
@@ -222,7 +222,7 @@ function renderCounters(counters) {
 
                 <div class="counter-progress">
                     <span class="${valueClass}">${displayValue}</span>
-                    <span class="counter-target">/ ${target}${habit.unit ? ' ' + escapeHtml(habit.unit) : ''}</span>
+                    <span class="counter-target">/ ${target}${habit.unit ? escapeHtml(habit.unit) : ''}</span>
                 </div>
 
                 <div class="counter-bar">
