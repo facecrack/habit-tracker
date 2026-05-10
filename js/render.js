@@ -17,8 +17,8 @@ function checkAllDone() {
     const mood = calculateDayMood(habits, todayObj);
     const allDone = mood !== null && mood.percent === 100;
 
-    const banner = document.querySelector('[data-screen="main"] .all-done-banner');
-    if (banner) banner.hidden = !allDone;
+    const banner = document.querySelector('[data-screen="main"] .week-done');
+    if (banner) banner.classList.toggle('week-done-visible', allDone);
 
     if (allDone && _allDoneWasComplete === false) {
         sounds.playSuccess();

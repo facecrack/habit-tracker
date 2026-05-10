@@ -446,21 +446,31 @@
 
 
 /* ============================================
-   ALL-DONE BANNER — celebration strip
+   ALL-DONE BANNER — celebration strip inside .week card
    ============================================ */
 
-.all-done-banner {
-    background: var(--brand-lime);
-    border-radius: var(--radius-lg);
-    padding: 18px 24px;
-    margin-bottom: 8px;
-    text-align: center;
+.week-done {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    margin: 0 -16px -16px;
+    transition:
+        max-height 0.45s cubic-bezier(0.34, 1.1, 0.64, 1),
+        opacity 0.3s ease,
+        padding 0.4s ease;
 }
 
-.all-done-text {
-    font-size: 15px;
+.week-done-visible {
+    max-height: 48px;
+    opacity: 1;
+    padding: 12px 16px;
+}
+
+.week-done-text {
+    font-size: 14px;
     font-weight: 600;
-    color: #1D1D1D;
+    color: var(--text-primary);
+    text-align: center;
 }
 
 

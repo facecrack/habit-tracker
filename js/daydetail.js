@@ -14,6 +14,36 @@ function openDayDetail(dateKey, dateLabel) {
 }
 
 
+function _getScheduled() {
+    const habits = storage.getHabits().filter(h => !h.archived);
+    const [y, m, d] = _dayKey.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayKey = dayKeys[date.getDay()];
+    return { habits: habits.filter(habit => {
+        if (render.isInPauseWindow(habit, date)) return false;
+        const created = render.parseLocalDate(habit.createdAt);
+        if (date < created) return false;
+        return habit.schedule.includes(dayKey);
+    }), date };
+}
+
+
+function _refreshMeta() {
+    const sheet = document.querySelector('[data-sheet="day-detail"]');
+    if (!sheet) return;
+    const { habits: scheduled } = _getScheduled();
+    let doneCount = 0;
+    scheduled.forEach(h => {
+        const entry = h.entries[_dayKey];
+        const target = h.target || 1;
+        if (entry === 'done' || (typeof entry === 'number' && entry >= target)) doneCount++;
+    });
+    const meta = sheet.querySelector('.day-detail-meta');
+    if (meta) meta.textContent = `${doneCount} of ${scheduled.length} done`;
+}
+
+
 function renderDayList() {
     const sheet = document.querySelector('[data-sheet="day-detail"]');
     if (!sheet) return;
@@ -21,18 +51,7 @@ function renderDayList() {
     const titleEl = sheet.querySelector('.day-detail-title');
     if (titleEl) titleEl.textContent = _dayLabel;
 
-    const habits = storage.getHabits().filter(h => !h.archived);
-    const [y, m, d] = _dayKey.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-    const dayKey = dayKeys[date.getDay()];
-
-    const scheduled = habits.filter(habit => {
-        if (render.isInPauseWindow(habit, date)) return false;
-        const created = render.parseLocalDate(habit.createdAt);
-        if (date < created) return false;
-        return habit.schedule.includes(dayKey);
-    });
+    const { habits: scheduled } = _getScheduled();
 
     let doneCount = 0;
     scheduled.forEach(h => {
@@ -78,6 +97,36 @@ function renderDayList() {
 }
 
 
+function _updateDayHabitEl(habitId) {
+    const habit = storage.getHabit(habitId);
+    if (!habit) return;
+
+    const li = document.querySelector(`[data-sheet="day-detail"] [data-habit-id="${habitId}"]`);
+    if (!li) return;
+
+    const entry = habit.entries[_dayKey];
+    const target = habit.target || 1;
+    const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+
+    li.className = `day-habit${isDone ? ' day-habit-done' : ''}`;
+
+    const checkBtn = li.querySelector('.habit-check');
+    if (checkBtn) {
+        checkBtn.className = `habit-check${isDone ? ' habit-check-done' : ''}`;
+        const circle = checkBtn.querySelector('.habit-check-circle');
+        if (circle) circle.innerHTML = isDone ? '<img src="icons/check.svg" alt="Done">' : '';
+    }
+
+    if (habit.type === 'counter') {
+        const streakEl = li.querySelector('.habit-streak');
+        if (streakEl) {
+            const value = typeof entry === 'number' ? entry : 0;
+            streakEl.textContent = `${value} / ${target}${habit.unit ? ' ' + habit.unit : ''}`;
+        }
+    }
+}
+
+
 function toggleHabitForDay(habitId) {
     const habit = storage.getHabit(habitId);
     if (!habit) return;
@@ -95,7 +144,8 @@ function toggleHabitForDay(habitId) {
     }
 
     if (navigator.vibrate) navigator.vibrate(10);
-    renderDayList();
+    _updateDayHabitEl(habitId);
+    _refreshMeta();
     render.refreshMoods();
 }
 

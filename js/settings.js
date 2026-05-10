@@ -172,12 +172,14 @@ function applyTheme(theme) {
 function clearHistory() {
     storage.clearAllEntries();
     hideAlert();
+    hideSheet();
     render.main();
 }
 
 function eraseAll() {
     storage.clearData();
     hideAlert();
+    hideSheet();
     render.main();
 }
 
