@@ -17,9 +17,6 @@ function checkAllDone() {
     const mood = calculateDayMood(habits, todayObj);
     const allDone = mood !== null && mood.percent === 100;
 
-    const weekEl = document.querySelector('[data-screen="main"] .week');
-    if (weekEl) weekEl.classList.toggle('all-done', allDone);
-
     const banner = document.querySelector('[data-screen="main"] .week-done');
     if (banner) banner.classList.toggle('week-done-visible', allDone);
 
