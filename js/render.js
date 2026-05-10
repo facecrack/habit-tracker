@@ -278,6 +278,14 @@ function renderCounters(counters) {
             </li>
         `;
     }).join('');
+
+    const activeCounters = scheduled.filter(h => !h.paused);
+    const allCountersDone = activeCounters.length > 0 && activeCounters.every(h => {
+        const v = h.entries[todayKey];
+        return typeof v === 'number' && v >= (h.target || 1);
+    });
+    const counterTitle = section.querySelector('.section-title');
+    if (counterTitle) counterTitle.classList.toggle('section-title-done', allCountersDone);
 }
 
 
@@ -302,6 +310,9 @@ function renderBinaries(binaries) {
     const doneCount = activeScheduled.filter((h) => h.entries[todayKey] === 'done').length;
     meta.textContent = `${doneCount} of ${activeScheduled.length} done`;
 
+    const title = section.querySelector('.section-title');
+    if (title) title.classList.toggle('section-title-done', activeScheduled.length > 0 && doneCount === activeScheduled.length);
+
     list.innerHTML = scheduled.map((habit) => {
         if (habit.paused) {
             return `
@@ -323,8 +334,10 @@ function renderBinaries(binaries) {
         const isSkipped = todayEntry === 'Skipped';
         const streak = calculateStreak(habit);
 
-        const stateClass = isDone ? 'habit-done' : '';
-        const subLabel = streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
+        const stateClass = isDone ? 'habit-done' : isSkipped ? 'habit-skipped' : '';
+        const subLabel = isSkipped
+            ? '<p class="habit-streak">Skipped</p>'
+            : streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
 
         return `
             <li class="habit ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
@@ -445,13 +458,16 @@ function updateBinary(habitId) {
         }
     }
 
-    const meta = document.querySelector('[data-screen="main"] .today .section-meta');
-    if (meta) {
+    const todaySection = document.querySelector('[data-screen="main"] .today');
+    if (todaySection) {
         const allHabits = storage.getHabits().filter((h) => !h.archived);
         const todayDayKey = getTodayDayKey();
         const scheduled = allHabits.filter(h => h.type === 'binary' && h.schedule.includes(todayDayKey) && !h.paused);
         const doneCount = scheduled.filter(h => h.entries[today] === 'done').length;
-        meta.textContent = `${doneCount} of ${scheduled.length} done`;
+        const metaEl = todaySection.querySelector('.section-meta');
+        if (metaEl) metaEl.textContent = `${doneCount} of ${scheduled.length} done`;
+        const titleEl = todaySection.querySelector('.section-title');
+        if (titleEl) titleEl.classList.toggle('section-title-done', scheduled.length > 0 && doneCount === scheduled.length);
     }
 
     renderLast5Days(storage.getHabits().filter((h) => !h.archived));
@@ -506,6 +522,19 @@ function updateCounter(habitId) {
         } else if (streakEl) {
             streakEl.remove();
         }
+    }
+
+    const countersSection = document.querySelector('[data-screen="main"] .counters');
+    if (countersSection) {
+        const allHabits = storage.getHabits().filter(h => !h.archived);
+        const todayDayKey = getTodayDayKey();
+        const scheduledCounters = allHabits.filter(h => h.type === 'counter' && !h.paused && h.schedule.includes(todayDayKey));
+        const allDone = scheduledCounters.length > 0 && scheduledCounters.every(h => {
+            const v = h.entries[today];
+            return typeof v === 'number' && v >= (h.target || 1);
+        });
+        const counterTitle = countersSection.querySelector('.section-title');
+        if (counterTitle) counterTitle.classList.toggle('section-title-done', allDone);
     }
 
     checkAllDone();
