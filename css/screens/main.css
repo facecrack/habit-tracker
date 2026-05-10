@@ -46,6 +46,11 @@
 
 .week-content {
     padding: 16px;
+    transition: padding-bottom 0.45s cubic-bezier(0.34, 1.1, 0.64, 1);
+}
+
+.week.all-done .week-content {
+    padding-bottom: 0;
 }
 
 .week-header {
