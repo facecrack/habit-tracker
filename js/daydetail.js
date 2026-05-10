@@ -75,7 +75,10 @@ function renderDayList() {
         const entry = habit.entries[_dayKey];
         const target = habit.target || 1;
         const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
-        const bgColor = pickers.colorToBg(habit.color);
+        // Grey habits blend into --bg-elevated item background — use light overlay instead
+        const bgColor = habit.color === '#353535'
+            ? 'rgba(255, 255, 255, 0.1)'
+            : pickers.colorToBg(habit.color);
         const value = typeof entry === 'number' ? entry : 0;
         const subtitle = habit.type === 'counter'
             ? `<p class="habit-streak">${value} / ${target}${habit.unit ? ' ' + render.escapeHtml(habit.unit) : ''}</p>`

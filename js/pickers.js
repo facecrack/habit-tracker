@@ -237,7 +237,7 @@ function buildTimeWheels() {
     const periodEl = document.querySelector('[data-col="period"] .time-col-scroll');
 
     if (!hourEl || !minEl) return;
-    periodWrap.hidden = !use12h;
+    if (periodWrap) periodWrap.hidden = !use12h;
 
     const hours = use12h
         ? Array.from({ length: 12 }, (_, i) => pad(i + 1))
@@ -421,8 +421,6 @@ function renderTimePickerRows() {
     const s = storage.getSettings();
     const soundLabel = document.querySelector('.time-picker-sound-label');
     if (soundLabel) soundLabel.textContent = formatSoundLabel(s.sound);
-    const vibrateToggle = document.querySelector('.time-picker-vibrate-toggle');
-    if (vibrateToggle) vibrateToggle.classList.toggle('toggle-on', s.vibrate !== false);
 }
 
 
@@ -434,13 +432,6 @@ function formatSoundLabel(value) {
         'none': 'None (vibration only)'
     };
     return map[value] || value;
-}
-
-
-function toggleVibrate() {
-    const s = storage.getSettings();
-    storage.updateSettings({ vibrate: !s.vibrate });
-    renderTimePickerRows();
 }
 
 
@@ -530,7 +521,6 @@ window.pickers = {
     selectUnit: selectUnit,
     openSound: openSoundPicker,
     selectSound: selectSound,
-    toggleVibrate: toggleVibrate,
     openStartWeek: openStartWeekPicker,
     selectStartWeek: selectStartWeek,
     openTimeFormat: openTimeFormatPicker,

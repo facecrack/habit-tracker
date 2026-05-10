@@ -76,21 +76,6 @@ function changeCounter(habitId, delta) {
 }
 
 
-function skipToday(habitId) {
-    const habit = storage.getHabit(habitId);
-    if (!habit) return;
-
-    const today = storage.getTodayString();
-    if (habit.entries[today] === 'done') return;
-    storage.setEntry(habitId, today, 'Skipped');
-
-    // Перерендериваем deteail если открыт
-    if (typeof detail !== 'undefined' && detail.currentId() === habitId) {
-        detail.open(habitId);
-    }
-}
-
-
 function deleteHabit(habitId) {
     storage.deleteHabit(habitId);
     render.main();
@@ -204,7 +189,6 @@ function _stopHold() {
 window.habits = {
     toggle: toggleHabit,
     changeCounter: changeCounter,
-    skipToday: skipToday,
     deleteHabit: deleteHabit,
     pause: pauseHabit,
     resume: resumeHabit,

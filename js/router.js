@@ -222,10 +222,6 @@ document.addEventListener('click', (event) => {
             form.openEdit(detail.currentId());
             break;
 
-        case 'skip-today':
-            habits.skipToday(detail.currentId());
-            break;
-
         case 'archive-habit':
             habits.archive(detail.currentId());
             break;
@@ -272,10 +268,6 @@ document.addEventListener('click', (event) => {
 
         case 'open-sound-picker':
             pickers.openSound();
-            break;
-
-        case 'toggle-vibrate':
-            pickers.toggleVibrate();
             break;
 
         case 'open-start-week-picker':

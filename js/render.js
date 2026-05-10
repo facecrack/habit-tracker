@@ -219,7 +219,6 @@ function renderCounters(counters) {
 
     list.innerHTML = scheduled.map((habit) => {
         const rawValue = habit.entries[todayKey];
-        const isSkipped = rawValue === 'Skipped';
         const value = typeof rawValue === 'number' ? rawValue : 0;
         const target = habit.target || 1;
 
@@ -247,8 +246,7 @@ function renderCounters(counters) {
             `;
         }
 
-        const percent = isSkipped ? 0 : Math.min(100, (value / target) * 100);
-        const displayValue = value;
+        const percent = Math.min(100, (value / target) * 100);
         const valueClass = 'counter-value';
         const isComplete = value >= target;
         const stateClass = isComplete ? 'counter-done' : '';
@@ -266,7 +264,7 @@ function renderCounters(counters) {
                 </header>
 
                 <div class="counter-progress">
-                    <span class="${valueClass}">${displayValue}</span>
+                    <span class="${valueClass}">${value}</span>
                     <span class="counter-target">/ ${target}${habit.unit ? escapeHtml(habit.unit) : ''}</span>
                 </div>
 
@@ -334,13 +332,10 @@ function renderBinaries(binaries) {
 
         const todayEntry = habit.entries[todayKey];
         const isDone = todayEntry === 'done';
-        const isSkipped = todayEntry === 'Skipped';
         const streak = calculateStreak(habit);
 
-        const stateClass = isDone ? 'habit-done' : isSkipped ? 'habit-skipped' : '';
-        const subLabel = isSkipped
-            ? '<p class="habit-streak">Skipped</p>'
-            : streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
+        const stateClass = isDone ? 'habit-done' : '';
+        const subLabel = streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
 
         return `
             <li class="habit ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
@@ -427,10 +422,9 @@ function updateBinary(habitId) {
     const today = storage.getTodayString();
     const todayEntry = habit.entries[today];
     const isDone = todayEntry === 'done';
-    const isSkipped = todayEntry === 'Skipped';
     const streak = calculateStreak(habit);
 
-    li.className = `habit${isDone ? ' habit-done' : isSkipped ? ' habit-skipped' : ''}`;
+    li.className = `habit${isDone ? ' habit-done' : ''}`;
 
     const checkBtn = li.querySelector('.habit-check');
     if (checkBtn) {
@@ -442,14 +436,7 @@ function updateBinary(habitId) {
     const infoEl = li.querySelector('.habit-info');
     if (infoEl) {
         let streakEl = infoEl.querySelector('.habit-streak');
-        if (isSkipped) {
-            if (!streakEl) {
-                streakEl = document.createElement('p');
-                streakEl.className = 'habit-streak';
-                infoEl.appendChild(streakEl);
-            }
-            streakEl.textContent = 'Skipped';
-        } else if (streak > 0) {
+        if (streak > 0) {
             if (!streakEl) {
                 streakEl = document.createElement('p');
                 streakEl.className = 'habit-streak';
@@ -487,11 +474,10 @@ function updateCounter(habitId) {
 
     const today = storage.getTodayString();
     const rawValue = habit.entries[today];
-    const isSkipped = rawValue === 'Skipped';
     const value = typeof rawValue === 'number' ? rawValue : 0;
     const target = habit.target || 1;
-    const percent = isSkipped ? 0 : Math.min(100, (value / target) * 100);
-    const isComplete = !isSkipped && value >= target;
+    const percent = Math.min(100, (value / target) * 100);
+    const isComplete = value >= target;
 
     const valueEl = li.querySelector('.counter-value');
     if (valueEl) {
@@ -499,16 +485,16 @@ function updateCounter(habitId) {
             valueEl.textContent = 'Paused';
             valueEl.className = 'counter-value counter-value-skipped';
         } else {
-            valueEl.textContent = isSkipped ? 'Skipped' : value;
-            valueEl.className = isSkipped ? 'counter-value counter-value-skipped' : 'counter-value';
+            valueEl.textContent = value;
+            valueEl.className = 'counter-value';
         }
     }
 
     const fill = li.querySelector('.counter-bar-fill');
-    if (fill) fill.style.width = (isSkipped || habit.paused ? 0 : percent) + '%';
+    if (fill) fill.style.width = (habit.paused ? 0 : percent) + '%';
 
     li.classList.toggle('counter-done', isComplete && !habit.paused);
-    li.classList.toggle('counter-skipped', isSkipped && !isComplete && !habit.paused);
+    li.classList.remove('counter-skipped');
     li.classList.toggle('counter-paused', !!habit.paused);
 
     const info = li.querySelector('.counter-header-info');
