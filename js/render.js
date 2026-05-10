@@ -119,6 +119,7 @@ function renderLast5Days(habits) {
 function calculateDayMood(habits, day) {
     let scheduled = 0;
     let done = 0;
+    let hasAnyEntry = false;
 
     habits.forEach((habit) => {
         if (isInPauseWindow(habit, day.date)) return;
@@ -128,6 +129,7 @@ function calculateDayMood(habits, day) {
 
         const entry = habit.entries[day.key];
         const isSkipped = entry === 'Skipped';
+        if (entry !== undefined && entry !== null) hasAnyEntry = true;
         if (isSkipped) return;
 
         scheduled++;
@@ -137,6 +139,7 @@ function calculateDayMood(habits, day) {
     });
 
     if (scheduled === 0) return null;
+    if (!hasAnyEntry) return null;
     return { percent: Math.round((done / scheduled) * 100), done, scheduled };
 }
 
