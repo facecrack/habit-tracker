@@ -134,7 +134,9 @@ function calculateDayMood(habits, day) {
 
         scheduled++;
         const target = habit.target || 1;
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
         if (isDone) done++;
     });
 
@@ -250,7 +252,7 @@ function renderCounters(counters) {
 
         const percent = Math.min(100, (value / target) * 100);
         const valueClass = 'counter-value';
-        const isComplete = value >= target;
+        const isComplete = habit.limitMode ? (value > 0 && value <= target) : value >= target;
         const stateClass = isComplete ? 'counter-done' : '';
         const streak = calculateStreak(habit);
         const streakHtml = streak > 0 ? `<p class="counter-streak">${streak} day streak</p>` : '';
@@ -362,7 +364,9 @@ function calculateStreak(habit) {
     const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
     const todayEntry = habit.entries[formatDateKey(today)];
-    const todayDone = todayEntry === 'done' || (typeof todayEntry === 'number' && todayEntry >= target);
+    const todayDone = habit.limitMode
+        ? (typeof todayEntry === 'number' && todayEntry > 0 && todayEntry <= target)
+        : (todayEntry === 'done' || (typeof todayEntry === 'number' && todayEntry >= target));
     const startOffset = todayDone ? 0 : 1;
 
     for (let i = startOffset; i < 365; i++) {
@@ -376,7 +380,9 @@ function calculateStreak(habit) {
         const key = formatDateKey(date);
         const entry = habit.entries[key];
         const isSkipped = entry === 'Skipped';
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
 
         if (isDone || isSkipped) {
             if (isDone) streak++;
@@ -479,7 +485,7 @@ function updateCounter(habitId) {
     const value = typeof rawValue === 'number' ? rawValue : 0;
     const target = habit.target || 1;
     const percent = Math.min(100, (value / target) * 100);
-    const isComplete = value >= target;
+    const isComplete = habit.limitMode ? (value > 0 && value <= target) : value >= target;
 
     const valueEl = li.querySelector('.counter-value');
     if (valueEl) {

@@ -222,9 +222,13 @@
         <section class="form-group">
             <label class="form-label">TARGET</label>
             <div class="target">
+                <div class="target-mode">
+                    <button class="target-mode-btn target-mode-btn-active" data-action="set-mode-goal">Goal</button>
+                    <button class="target-mode-btn" data-action="set-mode-limit">Limit</button>
+                </div>
                 <div class="target-row">
                     <div class="target-goal">
-                        <label class="target-sublabel">Goal</label>
+                        <label class="target-sublabel target-goal-label">Goal</label>
                         <input type="text" inputmode="numeric" pattern="[0-9]*" class="target-input" placeholder="0">
                     </div>
                     <div class="target-unit">

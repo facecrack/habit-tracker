@@ -117,7 +117,7 @@ function renderCounterDetail(habit) {
     }
 
     const todayTarget = screen.querySelector('.today-block-target');
-    if (todayTarget) todayTarget.textContent = `/ ${target}${habit.unit ? habit.unit : ''}`;
+    if (todayTarget) todayTarget.textContent = `/ ${target}${habit.unit ? habit.unit : ''} ${habit.limitMode ? 'limit' : ''}`;
 
     const todayBar = screen.querySelector('.today-block-bar-fill');
     if (todayBar) todayBar.style.width = (isInactive ? 0 : percent) + '%';
@@ -300,7 +300,9 @@ function renderChart(habit) {
     const maxValue = Math.max(target, ...days.map((d) => d.value));
 
     chartBars.innerHTML = days.map((d) => {
-        const reachedTarget = d.value >= target;
+        const reachedTarget = habit.limitMode
+            ? (d.value > 0 && d.value <= target)
+            : d.value >= target;
         const heightPx = maxValue > 0 ? Math.round((d.value / maxValue) * 80) : 0;
         const colorClass = d.isSkipped ? 'bar-skipped' : (reachedTarget ? 'bar-lime' : 'bar-purple');
         const todayClass = d.isToday ? 'bar-col-today' : '';
@@ -347,7 +349,9 @@ function calculateStats(habit) {
     // Current streak — от сегодня назад, пропускаем незапланированные дни и паузу
     let currentStreak = 0;
     const todayEntry = entries[formatDateKey(today)];
-    const todayDone = todayEntry === 'done' || (typeof todayEntry === 'number' && todayEntry >= target);
+    const todayDone = habit.limitMode
+        ? (typeof todayEntry === 'number' && todayEntry > 0 && todayEntry <= target)
+        : (todayEntry === 'done' || (typeof todayEntry === 'number' && todayEntry >= target));
     const startOffset = todayDone ? 0 : 1;
     for (let i = startOffset; i < 365; i++) {
         const d = new Date(today);
@@ -358,7 +362,9 @@ function calculateStats(habit) {
         const key = formatDateKey(d);
         const entry = entries[key];
         const isSkipped = entry === 'Skipped';
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
         if (isDone || isSkipped) {
             if (isDone) currentStreak++;
         } else {
@@ -378,7 +384,9 @@ function calculateStats(habit) {
         const key = formatDateKey(d);
         const entry = entries[key];
         const isSkipped = entry === 'Skipped';
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
         if (isDone || isSkipped) {
             if (isDone) {
                 tempStreak++;
@@ -416,7 +424,7 @@ function calculateStats(habit) {
         const values = Object.values(entries).filter((v) => typeof v === 'number');
         if (values.length > 0) {
             average = (values.reduce((s, v) => s + v, 0) / values.length).toFixed(1);
-            bestValue = Math.max(...values);
+            bestValue = habit.limitMode ? Math.min(...values) : Math.max(...values);
         }
     }
 

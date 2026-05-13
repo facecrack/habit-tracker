@@ -201,6 +201,28 @@
     gap: 16px;
 }
 
+.target-mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+}
+
+.target-mode-btn {
+    border-radius: var(--radius-sm);
+    height: 32px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.target-mode-btn-active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
 .target-row {
     display: grid;
     grid-template-columns: 40fr 60fr;

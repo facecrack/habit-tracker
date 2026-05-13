@@ -167,6 +167,14 @@ document.addEventListener('click', (event) => {
             pickers.openUnit();
             break;
 
+        case 'set-mode-goal':
+            form.setLimitMode(false);
+            break;
+
+        case 'set-mode-limit':
+            form.setLimitMode(true);
+            break;
+
         case 'step-decrement':
             form.changeStep(-1);
             break;

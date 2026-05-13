@@ -12,6 +12,7 @@ function createDefaultFormState() {
         target: 1,
         unit: '',
         step: 1,
+        limitMode: false,
         schedule: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
         reminders: []
     };
@@ -50,6 +51,7 @@ function openEditForm(habitId) {
         target: habit.target || 1,
         unit: habit.unit || '',
         step: habit.step || 1,
+        limitMode: habit.limitMode || false,
         schedule: [...habit.schedule],
         reminders: [...(habit.reminders || [])]
     };
@@ -155,6 +157,12 @@ function setTarget(value) {
 }
 
 
+function setLimitMode(isLimit) {
+    formState.limitMode = isLimit;
+    renderForm();
+}
+
+
 function changeStep(delta) {
     const newStep = formState.step + delta;
     formState.step = newStep < 1 ? 1 : newStep;
@@ -188,10 +196,12 @@ async function saveHabit() {
         habitData.target = formState.target;
         habitData.unit = formState.unit;
         habitData.step = formState.step;
+        habitData.limitMode = formState.limitMode;
     } else {
         habitData.unit = undefined;
         habitData.target = undefined;
         habitData.step = undefined;
+        habitData.limitMode = undefined;
     }
 
     if (editingHabitId) {
@@ -302,6 +312,15 @@ function renderForm() {
 
         const unitBtn = screen.querySelector('.target-unit-btn span:first-child');
         if (unitBtn) unitBtn.textContent = formState.unit || 'Choose unit';
+
+        const modeBtns = screen.querySelectorAll('.target-mode-btn');
+        if (modeBtns.length === 2) {
+            modeBtns[0].classList.toggle('target-mode-btn-active', !formState.limitMode);
+            modeBtns[1].classList.toggle('target-mode-btn-active', formState.limitMode);
+        }
+
+        const goalLabel = screen.querySelector('.target-goal-label');
+        if (goalLabel) goalLabel.textContent = formState.limitMode ? 'Limit' : 'Goal';
     }
 
     const saveBtn = screen.querySelector('.save-btn');
@@ -405,6 +424,7 @@ window.form = {
     setName: setName,
     setTarget: setTarget,
     changeStep: changeStep,
+    setLimitMode: setLimitMode,
     initStepRepeat: initStepRepeat,
     save: saveHabit
 };

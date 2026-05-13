@@ -37,7 +37,10 @@ function _refreshMeta() {
     scheduled.forEach(h => {
         const entry = h.entries[_dayKey];
         const target = h.target || 1;
-        if (entry === 'done' || (typeof entry === 'number' && entry >= target)) doneCount++;
+        const isDone = h.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
+        if (isDone) doneCount++;
     });
     const meta = sheet.querySelector('.day-detail-meta');
     if (meta) meta.textContent = `${doneCount} of ${scheduled.length} done`;
@@ -57,7 +60,10 @@ function renderDayList() {
     scheduled.forEach(h => {
         const entry = h.entries[_dayKey];
         const target = h.target || 1;
-        if (entry === 'done' || (typeof entry === 'number' && entry >= target)) doneCount++;
+        const isDone = h.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
+        if (isDone) doneCount++;
     });
 
     const meta = sheet.querySelector('.day-detail-meta');
@@ -74,7 +80,9 @@ function renderDayList() {
     list.innerHTML = scheduled.map(habit => {
         const entry = habit.entries[_dayKey];
         const target = habit.target || 1;
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
         // Grey habits blend into --bg-elevated item background — use light overlay instead
         const bgColor = habit.color === '#353535'
             ? 'rgba(255, 255, 255, 0.1)'
@@ -109,7 +117,9 @@ function _updateDayHabitEl(habitId) {
 
     const entry = habit.entries[_dayKey];
     const target = habit.target || 1;
-    const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+    const isDone = habit.limitMode
+        ? (typeof entry === 'number' && entry > 0 && entry <= target)
+        : (entry === 'done' || (typeof entry === 'number' && entry >= target));
 
     li.className = `day-habit${isDone ? ' day-habit-done' : ''}`;
 
@@ -138,7 +148,9 @@ function toggleHabitForDay(habitId) {
     const target = habit.target || 1;
     const isDone = habit.type === 'binary'
         ? entry === 'done'
-        : (typeof entry === 'number' && entry >= target);
+        : habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (typeof entry === 'number' && entry >= target);
 
     if (isDone) {
         storage.setEntry(habitId, _dayKey, null);

@@ -73,7 +73,10 @@ function renderStatWeeklyCard(habit) {
         const dayDate = day.date;
         const isBeforeCreated = dayDate < created;
         const isFuture = dayDate > today;
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= (habit.target || 1));
+        const t = habit.target || 1;
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= t)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= t));
         const isSkipped = entry === 'Skipped';
         const isPaused = isInPauseWindow(habit, dayDate) && isHabitDay && !isFuture && !isBeforeCreated;
         const isMissed = isHabitDay && !isDone && !isSkipped && !isPaused && !isFuture && !isBeforeCreated && !isToday;
@@ -224,7 +227,10 @@ function renderHeatmap12Weeks(habit) {
             const isBeforeCreated = cellDate < created;
             const dayKey = dayKeys[(cellDate.getDay() + 6) % 7];
             const isHabitDay = habit.schedule.includes(dayKey);
-            const isDone = entry === 'done' || (typeof entry === 'number' && entry >= (habit.target || 1));
+            const t = habit.target || 1;
+            const isDone = habit.limitMode
+                ? (typeof entry === 'number' && entry > 0 && entry <= t)
+                : (entry === 'done' || (typeof entry === 'number' && entry >= t));
             const isSkipped = entry === 'Skipped';
 
             let cellClass = 'stat-heatmap-cell';
@@ -266,9 +272,11 @@ function calculateSummary(habits) {
         if (streak > bestStreak) bestStreak = streak;
 
         Object.values(habit.entries).forEach((entry) => {
-            if (entry === 'done' || (typeof entry === 'number' && entry >= (habit.target || 1))) {
-                totalDone++;
-            }
+            const t = habit.target || 1;
+            const isDone = habit.limitMode
+                ? (typeof entry === 'number' && entry > 0 && entry <= t)
+                : (entry === 'done' || (typeof entry === 'number' && entry >= t));
+            if (isDone) totalDone++;
         });
 
         const habitSuccess = calculateSuccessPercent(habit);
@@ -306,9 +314,10 @@ function calculateSuccessPercent(habit) {
             const isSkipped = entry === 'Skipped';
             if (!isSkipped) {
                 scheduledDays++;
-                if (entry === 'done' || (typeof entry === 'number' && entry >= target)) {
-                    doneDays++;
-                }
+                const isDone = habit.limitMode
+                    ? (typeof entry === 'number' && entry > 0 && entry <= target)
+                    : (entry === 'done' || (typeof entry === 'number' && entry >= target));
+                if (isDone) doneDays++;
             }
         }
         cursor.setDate(cursor.getDate() + 1);
