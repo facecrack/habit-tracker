@@ -188,6 +188,10 @@ async function saveHabit() {
         habitData.target = formState.target;
         habitData.unit = formState.unit;
         habitData.step = formState.step;
+    } else {
+        habitData.unit = undefined;
+        habitData.target = undefined;
+        habitData.step = undefined;
     }
 
     if (editingHabitId) {

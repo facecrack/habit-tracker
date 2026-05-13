@@ -89,7 +89,7 @@ function renderCounterDetail(habit) {
     if (name) name.textContent = habit.name;
 
     const meta = screen.querySelector('.detail-meta');
-    if (meta) meta.textContent = `${formatSchedule(habit.schedule)} / ${habit.target}${habit.unit ? habit.unit : ''}`;
+    if (meta) meta.textContent = `${formatSchedule(habit.schedule)} / ${habit.target}${habit.unit ? ' ' + habit.unit : ''}`;
 
     // Pause state
     const banner = screen.querySelector('.detail-paused-banner');
@@ -117,7 +117,7 @@ function renderCounterDetail(habit) {
     }
 
     const todayTarget = screen.querySelector('.today-block-target');
-    if (todayTarget) todayTarget.textContent = `/ ${target}${habit.unit ? habit.unit : ''}`;
+    if (todayTarget) todayTarget.textContent = `/ ${target}${habit.unit ? ' ' + habit.unit : ''}`;
 
     const todayBar = screen.querySelector('.today-block-bar-fill');
     if (todayBar) todayBar.style.width = (isInactive ? 0 : percent) + '%';
