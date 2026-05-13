@@ -534,6 +534,7 @@ function updateCounter(habitId) {
         const scheduledCounters = allHabits.filter(h => h.type === 'counter' && !h.paused && h.schedule.includes(todayDayKey));
         const allDone = scheduledCounters.length > 0 && scheduledCounters.every(h => {
             const v = h.entries[today];
+            if (h.limitMode) return typeof v === 'number' && v > 0 && v <= (h.target || 1);
             return typeof v === 'number' && v >= (h.target || 1);
         });
         const counterTitle = countersSection.querySelector('.section-title');

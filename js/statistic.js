@@ -77,6 +77,7 @@ function renderStatWeeklyCard(habit) {
         const isDone = habit.limitMode
             ? (typeof entry === 'number' && entry > 0 && entry <= t)
             : (entry === 'done' || (typeof entry === 'number' && entry >= t));
+        const isOverLimit = habit.limitMode && typeof entry === 'number' && entry > t;
         const isSkipped = entry === 'Skipped';
         const isPaused = isInPauseWindow(habit, dayDate) && isHabitDay && !isFuture && !isBeforeCreated;
         const isMissed = isHabitDay && !isDone && !isSkipped && !isPaused && !isFuture && !isBeforeCreated && !isToday;
@@ -89,11 +90,11 @@ function renderStatWeeklyCard(habit) {
             icon = '<svg class="stat-week-day-icon" viewBox="0 0 14 14" fill="none"><path d="M2 7l3 3 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         } else if (isSkipped || isPaused) {
             circleClass += ' stat-week-day-circle-skipped';
-        } else if (isToday) {
-            circleClass += ' stat-week-day-circle-today';
-        } else if (isMissed) {
+        } else if (isOverLimit || isMissed) {
             circleClass += ' stat-week-day-circle-missed';
             icon = '<svg class="stat-week-day-icon" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>';
+        } else if (isToday) {
+            circleClass += ' stat-week-day-circle-today';
         }
 
         return `
@@ -187,9 +188,9 @@ function renderStatOverallCard(habit) {
 
             <div class="stat-overall-divider"></div>
             <div class="stat-overall-legend">
-                <div class="stat-legend-item"><span class="stat-legend-dot stat-legend-dot-done"></span>Done</div>
+                <div class="stat-legend-item"><span class="stat-legend-dot stat-legend-dot-done"></span>${habit.limitMode ? 'Within limit' : 'Done'}</div>
                 <div class="stat-legend-item"><span class="stat-legend-dot stat-legend-dot-skipped"></span>Paused</div>
-                <div class="stat-legend-item"><span class="stat-legend-dot stat-legend-dot-missed"></span>Missed</div>
+                <div class="stat-legend-item"><span class="stat-legend-dot stat-legend-dot-missed"></span>${habit.limitMode ? 'Over limit' : 'Missed'}</div>
             </div>
         </div>
     `;
@@ -231,10 +232,10 @@ function renderHeatmap12Weeks(habit) {
             const isDone = habit.limitMode
                 ? (typeof entry === 'number' && entry > 0 && entry <= t)
                 : (entry === 'done' || (typeof entry === 'number' && entry >= t));
+            const isOverLimit = habit.limitMode && typeof entry === 'number' && entry > t;
             const isSkipped = entry === 'Skipped';
 
             let cellClass = 'stat-heatmap-cell';
-            let inlineStyle = '';
 
             if (isFuture || isBeforeCreated) {
                 // пустая
@@ -242,10 +243,10 @@ function renderHeatmap12Weeks(habit) {
                 cellClass += ' stat-heatmap-cell-done';
             } else if (isSkipped || isInPauseWindow(habit, cellDate)) {
                 cellClass += ' stat-heatmap-cell-skipped';
+            } else if (isOverLimit || (!isToday && isHabitDay)) {
+                cellClass += ' stat-heatmap-cell-missed';
             } else if (isToday) {
                 cellClass += ' stat-heatmap-cell-today';
-            } else if (isHabitDay) {
-                cellClass += ' stat-heatmap-cell-missed';
             }
 
             const style = `grid-row: ${row + 1}; grid-column: ${col + 1};`;
@@ -344,7 +345,9 @@ function calculateBestStreak(habit) {
         const key = formatDateKey(d);
         const entry = habit.entries[key];
         const isSkipped = entry === 'Skipped';
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
 
         if (isDone || isSkipped) {
             if (isDone) {

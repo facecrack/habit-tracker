@@ -68,7 +68,7 @@ function changeCounter(habitId, delta) {
     }
 
     requestAnimationFrame(() => {
-        const card = document.querySelector(`[data-habit-id="${habitId}"]`);
+        const card = document.querySelector(`[data-screen="main"] [data-habit-id="${habitId}"]`);
         if (!card) return;
         card.classList.add('counter-bump');
         setTimeout(() => card.classList.remove('counter-bump'), 250);
