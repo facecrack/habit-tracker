@@ -237,7 +237,7 @@ function renderCounters(counters) {
                     </header>
                     <div class="counter-progress">
                         <span class="counter-value counter-value-skipped">Paused</span>
-                        <span class="counter-target">/ ${target}</span>
+                        <span class="counter-target">${habit.limitMode ? '≤' : '/'} ${target}</span>
                     </div>
                     <div class="counter-bar">
                         <div class="counter-bar-fill" style="width: 0%;"></div>
@@ -271,7 +271,7 @@ function renderCounters(counters) {
 
                 <div class="counter-progress">
                     <span class="${valueClass}">${value}</span>
-                    <span class="counter-target">/ ${target}</span>
+                    <span class="counter-target">${habit.limitMode ? '≤' : '/'} ${target}</span>
                 </div>
 
                 <div class="counter-bar">

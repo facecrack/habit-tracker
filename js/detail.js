@@ -107,6 +107,9 @@ function renderCounterDetail(habit) {
     const target = habit.target || 1;
     const percent = isInactive ? 0 : Math.min(100, Math.round((todayValue / target) * 100));
 
+    const isComplete = !habit.limitMode && todayValue >= target;
+    const isOverLimit = habit.limitMode && todayValue > target;
+
     const todayPercent = screen.querySelector('.today-block-percent');
     if (todayPercent) todayPercent.textContent = percent + '%';
 
@@ -114,13 +117,11 @@ function renderCounterDetail(habit) {
     if (todayValueEl) {
         todayValueEl.textContent = isPaused ? 'Paused' : todayValue;
         todayValueEl.classList.toggle('today-block-value-skipped', isInactive);
+        todayValueEl.style.color = (!isInactive && isOverLimit) ? 'var(--status-red)' : '';
     }
 
     const todayTarget = screen.querySelector('.today-block-target');
     if (todayTarget) todayTarget.textContent = `/ ${target}${habit.unit ? habit.unit : ''} ${habit.limitMode ? 'limit' : ''}`;
-
-    const isComplete = !habit.limitMode && todayValue >= target;
-    const isOverLimit = habit.limitMode && todayValue > target;
     const todayBar = screen.querySelector('.today-block-bar-fill');
     if (todayBar) {
         todayBar.style.width = (isInactive ? 0 : percent) + '%';
