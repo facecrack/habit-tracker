@@ -51,7 +51,7 @@ function changeCounter(habitId, delta) {
     let newValue = current + (delta * step);
     if (newValue < 0) newValue = 0;
 
-    const goalJustReached = newValue >= target && current < target;
+    const goalJustReached = !habit.limitMode && newValue >= target && current < target;
 
     if (newValue === 0) {
         storage.setEntry(habitId, today, null);

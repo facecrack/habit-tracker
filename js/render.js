@@ -252,8 +252,9 @@ function renderCounters(counters) {
 
         const percent = Math.min(100, (value / target) * 100);
         const valueClass = 'counter-value';
-        const isComplete = habit.limitMode ? (value > 0 && value <= target) : value >= target;
-        const stateClass = isComplete ? 'counter-done' : '';
+        const isComplete = !habit.limitMode && value >= target;
+        const isOverLimit = habit.limitMode && value > target;
+        const stateClass = isComplete ? 'counter-done' : (isOverLimit ? 'counter-over-limit' : '');
         const streak = calculateStreak(habit);
         const streakHtml = streak > 0 ? `<p class="counter-streak">${streak} day streak</p>` : '';
 
@@ -287,6 +288,7 @@ function renderCounters(counters) {
     const activeCounters = scheduled.filter(h => !h.paused);
     const allCountersDone = activeCounters.length > 0 && activeCounters.every(h => {
         const v = h.entries[todayKey];
+        if (h.limitMode) return typeof v === 'number' && v > 0 && v <= (h.target || 1);
         return typeof v === 'number' && v >= (h.target || 1);
     });
     const counterTitle = section.querySelector('.section-title');
@@ -485,7 +487,8 @@ function updateCounter(habitId) {
     const value = typeof rawValue === 'number' ? rawValue : 0;
     const target = habit.target || 1;
     const percent = Math.min(100, (value / target) * 100);
-    const isComplete = habit.limitMode ? (value > 0 && value <= target) : value >= target;
+    const isComplete = !habit.limitMode && value >= target;
+    const isOverLimit = habit.limitMode && value > target;
 
     const valueEl = li.querySelector('.counter-value');
     if (valueEl) {
@@ -502,6 +505,7 @@ function updateCounter(habitId) {
     if (fill) fill.style.width = (habit.paused ? 0 : percent) + '%';
 
     li.classList.toggle('counter-done', isComplete && !habit.paused);
+    li.classList.toggle('counter-over-limit', isOverLimit && !habit.paused);
     li.classList.remove('counter-skipped');
     li.classList.toggle('counter-paused', !!habit.paused);
 

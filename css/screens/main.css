@@ -272,6 +272,14 @@
     opacity: 0.5;
 }
 
+.counter-over-limit .counter-bar-fill {
+    background: var(--status-red);
+}
+
+.counter-over-limit .counter-value {
+    color: var(--status-red);
+}
+
 .counter-skipped {
     opacity: var(--opacity-completed);
 }
