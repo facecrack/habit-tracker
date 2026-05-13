@@ -272,6 +272,10 @@
     opacity: 0.5;
 }
 
+.counter-limit .counter-bar-fill {
+    background: var(--brand-lime);
+}
+
 .counter-over-limit .counter-bar-fill {
     background: var(--status-red);
 }

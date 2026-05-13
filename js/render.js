@@ -254,12 +254,13 @@ function renderCounters(counters) {
         const valueClass = 'counter-value';
         const isComplete = !habit.limitMode && value >= target;
         const isOverLimit = habit.limitMode && value > target;
+        const limitClass = habit.limitMode ? 'counter-limit' : '';
         const stateClass = isComplete ? 'counter-done' : (isOverLimit ? 'counter-over-limit' : '');
         const streak = calculateStreak(habit);
         const streakHtml = streak > 0 ? `<p class="counter-streak">${streak} day streak</p>` : '';
 
         return `
-            <li class="counter ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
+            <li class="counter ${limitClass} ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
                 <header class="counter-header">
                     <div class="counter-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
                     <div class="counter-header-info">
@@ -504,6 +505,7 @@ function updateCounter(habitId) {
     const fill = li.querySelector('.counter-bar-fill');
     if (fill) fill.style.width = (habit.paused ? 0 : percent) + '%';
 
+    li.classList.toggle('counter-limit', !!habit.limitMode);
     li.classList.toggle('counter-done', isComplete && !habit.paused);
     li.classList.toggle('counter-over-limit', isOverLimit && !habit.paused);
     li.classList.remove('counter-skipped');

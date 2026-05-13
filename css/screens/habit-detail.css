@@ -430,6 +430,10 @@
     background: var(--text-secondary);
 }
 
+.bar-red {
+    background: var(--status-red);
+}
+
 .chart-divider {
     height: 1px;
     background: var(--text-secondary);

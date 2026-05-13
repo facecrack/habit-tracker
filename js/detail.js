@@ -119,8 +119,21 @@ function renderCounterDetail(habit) {
     const todayTarget = screen.querySelector('.today-block-target');
     if (todayTarget) todayTarget.textContent = `/ ${target}${habit.unit ? habit.unit : ''} ${habit.limitMode ? 'limit' : ''}`;
 
+    const isComplete = !habit.limitMode && todayValue >= target;
+    const isOverLimit = habit.limitMode && todayValue > target;
     const todayBar = screen.querySelector('.today-block-bar-fill');
-    if (todayBar) todayBar.style.width = (isInactive ? 0 : percent) + '%';
+    if (todayBar) {
+        todayBar.style.width = (isInactive ? 0 : percent) + '%';
+        if (isInactive) {
+            todayBar.style.background = '';
+        } else if (isOverLimit) {
+            todayBar.style.background = 'var(--status-red)';
+        } else if (isComplete || habit.limitMode) {
+            todayBar.style.background = 'var(--brand-lime)';
+        } else {
+            todayBar.style.background = '';
+        }
+    }
 
     // Stats
     const stats = calculateStats(habit);
@@ -303,8 +316,12 @@ function renderChart(habit) {
         const reachedTarget = habit.limitMode
             ? (d.value > 0 && d.value <= target)
             : d.value >= target;
+        const overLimit = habit.limitMode && d.value > target;
         const heightPx = maxValue > 0 ? Math.round((d.value / maxValue) * 80) : 0;
-        const colorClass = d.isSkipped ? 'bar-skipped' : (reachedTarget ? 'bar-lime' : 'bar-purple');
+        const colorClass = d.isSkipped ? 'bar-skipped'
+            : overLimit ? 'bar-red'
+            : reachedTarget ? 'bar-lime'
+            : 'bar-purple';
         const todayClass = d.isToday ? 'bar-col-today' : '';
         const finalHeight = d.isSkipped ? 8 : heightPx;
         return `
