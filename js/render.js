@@ -139,7 +139,9 @@ function calculateDayMood(habits, day) {
     });
 
     if (scheduled === 0) return null;
-    if (!hasAnyEntry) return null;
+    // For today: hide mood until user logs at least one entry.
+    // For past days: missed habits count as 0% — don't hide as rest day.
+    if (!hasAnyEntry && day.key === storage.getTodayString()) return null;
     return { percent: Math.round((done / scheduled) * 100), done, scheduled };
 }
 
@@ -233,7 +235,7 @@ function renderCounters(counters) {
                     </header>
                     <div class="counter-progress">
                         <span class="counter-value counter-value-skipped">Paused</span>
-                        <span class="counter-target">/ ${target}${habit.unit ? ' ' + escapeHtml(habit.unit) : ''}</span>
+                        <span class="counter-target">/ ${target}${habit.unit ? escapeHtml(habit.unit) : ''}</span>
                     </div>
                     <div class="counter-bar">
                         <div class="counter-bar-fill" style="width: 0%;"></div>
@@ -265,7 +267,7 @@ function renderCounters(counters) {
 
                 <div class="counter-progress">
                     <span class="${valueClass}">${value}</span>
-                    <span class="counter-target">/ ${target}${habit.unit ? ' ' + escapeHtml(habit.unit) : ''}</span>
+                    <span class="counter-target">/ ${target}${habit.unit ? escapeHtml(habit.unit) : ''}</span>
                 </div>
 
                 <div class="counter-bar">

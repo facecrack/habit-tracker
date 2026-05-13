@@ -81,7 +81,7 @@ function renderDayList() {
             : pickers.colorToBg(habit.color);
         const value = typeof entry === 'number' ? entry : 0;
         const subtitle = habit.type === 'counter'
-            ? `<p class="habit-streak">${value} / ${target}${habit.unit ? ' ' + render.escapeHtml(habit.unit) : ''}</p>`
+            ? `<p class="habit-streak">${value} / ${target}${habit.unit ? render.escapeHtml(habit.unit) : ''}</p>`
             : '';
 
         return `
@@ -124,7 +124,7 @@ function _updateDayHabitEl(habitId) {
         const streakEl = li.querySelector('.habit-streak');
         if (streakEl) {
             const value = typeof entry === 'number' ? entry : 0;
-            streakEl.textContent = `${value} / ${target}${habit.unit ? ' ' + habit.unit : ''}`;
+            streakEl.textContent = `${value} / ${target}${habit.unit ? habit.unit : ''}`;
         }
     }
 }

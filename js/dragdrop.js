@@ -77,6 +77,9 @@ function onTouchEnd() {
     item.classList.remove('drag-placeholder');
     ghost.remove();
 
+    // Always suppress the synthetic click that follows touchend after a drag
+    preventNextClick = true;
+
     if (currentTarget) {
         const allItems = Array.from(list.querySelectorAll('[data-habit-id]'));
         const sourceIndex = allItems.indexOf(item);
@@ -90,7 +93,6 @@ function onTouchEnd() {
 
         const ids = Array.from(list.querySelectorAll('[data-habit-id]')).map(el => el.dataset.habitId);
         storage.reorderHabitsInSection(ids);
-        preventNextClick = true;
     }
 
     dragState = null;
