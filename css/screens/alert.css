@@ -232,7 +232,7 @@
 }
 
 .counter-edit-name {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     color: var(--text-primary);
     text-align: center;
@@ -302,9 +302,9 @@
 .counter-edit-done-btn {
     height: 52px;
     width: 100%;
-    background: var(--bg-elevated);
+    background: var(--brand-lime);
     border-radius: var(--radius-md);
     font-size: 15px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #1D1D1D;
 }
