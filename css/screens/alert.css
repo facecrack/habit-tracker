@@ -232,9 +232,9 @@
 }
 
 .counter-edit-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     text-align: center;
 }
 
@@ -247,7 +247,7 @@
 }
 
 .counter-edit-value {
-    font-size: 52px;
+    font-size: 40px;
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1;
@@ -257,6 +257,13 @@
     font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
+}
+
+.counter-edit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
 }
 
 .counter-edit-controls {
