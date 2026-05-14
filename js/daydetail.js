@@ -183,7 +183,8 @@ function changeCounterForDay(habitId, delta) {
 
     const entry = habit.entries[_dayKey];
     const current = typeof entry === 'number' ? entry : 0;
-    const next = Math.max(0, current + delta);
+    const step = habit.step || 1;
+    const next = Math.max(0, current + delta * step);
 
     storage.setEntry(habitId, _dayKey, next === 0 ? null : next);
 

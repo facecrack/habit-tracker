@@ -136,12 +136,14 @@ let _holdStartY = 0;
 
 function initCounterRepeat() {
     document.addEventListener('touchstart', (e) => {
-        const btn = e.target.closest('.counter-btn-plus, .counter-btn-minus');
+        const btn = e.target.closest('.counter-btn-plus, .counter-btn-minus, .day-counter-btn-plus, .day-counter-btn-minus');
         if (!btn) return;
         const li = btn.closest('[data-habit-id]');
         if (!li) return;
         const habitId = li.dataset.habitId;
-        const delta = btn.classList.contains('counter-btn-plus') ? 1 : -1;
+        const isDay = btn.classList.contains('day-counter-btn-plus') || btn.classList.contains('day-counter-btn-minus');
+        const delta = (btn.classList.contains('counter-btn-plus') || btn.classList.contains('day-counter-btn-plus')) ? 1 : -1;
+        const doChange = () => isDay ? dayDetail.changeCounter(habitId, delta) : changeCounter(habitId, delta);
 
         _stopHold();
         _longPressActive = false;
@@ -151,7 +153,7 @@ function initCounterRepeat() {
         _holdTimer = setTimeout(() => {
             _holdTimer = null;
             _longPressActive = true;
-            _holdInterval = setInterval(() => changeCounter(habitId, delta), 150);
+            _holdInterval = setInterval(doChange, 150);
         }, 500);
     }, { passive: true });
 
