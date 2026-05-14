@@ -197,3 +197,104 @@
 .hint-actions {
     margin: 0;
 }
+
+
+/* ============================================
+   COUNTER EDIT POPUP — центрированный попап над sheet
+   ============================================ */
+
+.counter-edit-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.counter-edit-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.counter-edit-modal {
+    position: relative;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 24px 20px 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.counter-edit-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.counter-edit-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.counter-edit-btn {
+    height: 56px;
+    flex: 1;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.counter-edit-btn-minus {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+
+.counter-edit-btn-minus:disabled {
+    opacity: 0.35;
+}
+
+.counter-edit-btn-plus {
+    background: var(--brand-lime);
+    color: #1D1D1D;
+}
+
+.counter-edit-value {
+    font-size: 40px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 80px;
+    text-align: center;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.counter-edit-hint {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: -8px;
+}
+
+.counter-edit-done-btn {
+    height: 52px;
+    width: 100%;
+    background: var(--brand-lime);
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    color: #1D1D1D;
+}

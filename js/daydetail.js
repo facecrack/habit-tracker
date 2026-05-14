@@ -4,6 +4,8 @@
 
 let _dayKey = null;
 let _dayLabel = null;
+let _editHabitId = null;
+let _editValue = 0;
 
 
 function openDayDetail(dateKey, dateLabel) {
@@ -89,18 +91,23 @@ function renderDayList() {
             : pickers.colorToBg(habit.color);
         const value = typeof entry === 'number' ? entry : 0;
 
+        const controls = `
+            <button class="habit-check ${isDone ? 'habit-check-done' : ''}" data-action="day-habit-toggle">
+                <span class="habit-check-circle">${isDone ? '<img src="icons/check.svg" alt="Done">' : ''}</span>
+            </button>`;
+
         if (habit.type === 'counter') {
             return `
                 <li class="day-habit${isDone ? ' day-habit-done' : ''}" data-habit-id="${habit.id}">
                     <div class="habit-icon" style="background-color: ${bgColor};">${habit.icon}</div>
                     <div class="habit-info">
                         <h3 class="habit-name">${render.escapeHtml(habit.name)}</h3>
-                        <p class="habit-streak">${value} / ${target}${habit.unit ? render.escapeHtml(habit.unit) : ''}</p>
+                        <button class="day-counter-subtitle" data-action="day-counter-edit">
+                            <span class="habit-streak">${value} / ${target}${habit.unit ? render.escapeHtml(habit.unit) : ''}</span>
+                            <img src="icons/edit.svg" alt="" class="day-counter-edit-icon">
+                        </button>
                     </div>
-                    <div class="day-counter-controls">
-                        <button class="day-counter-btn day-counter-btn-minus" data-action="day-counter-decrement"${value <= 0 ? ' disabled' : ''}>−</button>
-                        <button class="day-counter-btn day-counter-btn-plus" data-action="day-counter-increment">+</button>
-                    </div>
+                    ${controls}
                 </li>
             `;
         }
@@ -111,9 +118,7 @@ function renderDayList() {
                 <div class="habit-info">
                     <h3 class="habit-name">${render.escapeHtml(habit.name)}</h3>
                 </div>
-                <button class="habit-check ${isDone ? 'habit-check-done' : ''}" data-action="day-habit-toggle">
-                    <span class="habit-check-circle">${isDone ? '<img src="icons/check.svg" alt="Done">' : ''}</span>
-                </button>
+                ${controls}
             </li>
         `;
     }).join('');
@@ -146,8 +151,6 @@ function _updateDayHabitEl(habitId) {
         const value = typeof entry === 'number' ? entry : 0;
         const streakEl = li.querySelector('.habit-streak');
         if (streakEl) streakEl.textContent = `${value} / ${target}${habit.unit ? habit.unit : ''}`;
-        const minusBtn = li.querySelector('.day-counter-btn-minus');
-        if (minusBtn) minusBtn.disabled = value <= 0;
     }
 }
 
@@ -177,26 +180,77 @@ function toggleHabitForDay(habitId) {
 }
 
 
-function changeCounterForDay(habitId, delta) {
+function openCounterEdit(habitId) {
     const habit = storage.getHabit(habitId);
     if (!habit) return;
 
+    _editHabitId = habitId;
     const entry = habit.entries[_dayKey];
-    const current = typeof entry === 'number' ? entry : 0;
+    _editValue = typeof entry === 'number' ? entry : 0;
+
+    const overlay = document.querySelector('[data-overlay="counter-edit"]');
+    if (!overlay) return;
+
     const step = habit.step || 1;
-    const next = Math.max(0, current + delta * step);
+    overlay.querySelector('.counter-edit-name').textContent = habit.name;
+    overlay.querySelector('.counter-edit-btn-minus').textContent = `−${step}`;
+    overlay.querySelector('.counter-edit-btn-plus').textContent = `+${step}`;
+    overlay.querySelector('.counter-edit-hint').textContent = `/ ${habit.target}${habit.unit || ''}`;
 
-    storage.setEntry(habitId, _dayKey, next === 0 ? null : next);
+    _refreshEditDisplay(overlay, habit);
+    overlay.hidden = false;
+}
 
-    if (navigator.vibrate) navigator.vibrate(10);
-    _updateDayHabitEl(habitId);
+function _refreshEditDisplay(overlay, habit) {
+    const target = habit.target || 1;
+    const isOverLimit = !!habit.limitMode && _editValue > target;
+
+    const valEl = overlay.querySelector('.counter-edit-value');
+    if (valEl) {
+        valEl.textContent = _editValue;
+        valEl.style.color = isOverLimit ? 'var(--status-red)' : '';
+    }
+
+    const minusBtn = overlay.querySelector('.counter-edit-btn-minus');
+    if (minusBtn) minusBtn.disabled = _editValue <= 0;
+}
+
+function changeEditValue(delta) {
+    const habit = storage.getHabit(_editHabitId);
+    if (!habit) return;
+
+    const step = habit.step || 1;
+    _editValue = Math.max(0, _editValue + delta * step);
+
+    const overlay = document.querySelector('[data-overlay="counter-edit"]');
+    if (overlay) _refreshEditDisplay(overlay, habit);
+
+    if (navigator.vibrate) navigator.vibrate(5);
+}
+
+function saveCounterEdit() {
+    if (!_editHabitId) return;
+
+    storage.setEntry(_editHabitId, _dayKey, _editValue === 0 ? null : _editValue);
+    _updateDayHabitEl(_editHabitId);
     _refreshMeta();
     render.refreshMoods();
+    closeCounterEdit();
+}
+
+function closeCounterEdit() {
+    const overlay = document.querySelector('[data-overlay="counter-edit"]');
+    if (overlay) overlay.hidden = true;
+    _editHabitId = null;
+    _editValue = 0;
 }
 
 
 window.dayDetail = {
     open: openDayDetail,
     toggle: toggleHabitForDay,
-    changeCounter: changeCounterForDay,
+    openEdit: openCounterEdit,
+    changeEditValue,
+    saveEdit: saveCounterEdit,
+    closeEdit: closeCounterEdit,
 };

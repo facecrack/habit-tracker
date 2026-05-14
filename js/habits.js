@@ -136,14 +136,19 @@ let _holdStartY = 0;
 
 function initCounterRepeat() {
     document.addEventListener('touchstart', (e) => {
-        const btn = e.target.closest('.counter-btn-plus, .counter-btn-minus, .day-counter-btn-plus, .day-counter-btn-minus');
+        const btn = e.target.closest('.counter-btn-plus, .counter-btn-minus, .counter-edit-btn-plus, .counter-edit-btn-minus');
         if (!btn) return;
-        const li = btn.closest('[data-habit-id]');
-        if (!li) return;
-        const habitId = li.dataset.habitId;
-        const isDay = btn.classList.contains('day-counter-btn-plus') || btn.classList.contains('day-counter-btn-minus');
-        const delta = (btn.classList.contains('counter-btn-plus') || btn.classList.contains('day-counter-btn-plus')) ? 1 : -1;
-        const doChange = () => isDay ? dayDetail.changeCounter(habitId, delta) : changeCounter(habitId, delta);
+        const isEdit = btn.classList.contains('counter-edit-btn-plus') || btn.classList.contains('counter-edit-btn-minus');
+        const delta = (btn.classList.contains('counter-btn-plus') || btn.classList.contains('counter-edit-btn-plus')) ? 1 : -1;
+
+        let habitId = null;
+        if (!isEdit) {
+            const li = btn.closest('[data-habit-id]');
+            if (!li) return;
+            habitId = li.dataset.habitId;
+        }
+
+        const doChange = () => isEdit ? dayDetail.changeEditValue(delta) : changeCounter(habitId, delta);
 
         _stopHold();
         _longPressActive = false;

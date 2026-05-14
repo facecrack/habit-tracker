@@ -328,19 +328,28 @@ case 'stat-tab':
             break;
         }
 
-        case 'day-counter-increment': {
+        case 'day-counter-edit': {
             event.stopPropagation();
             const li = actionEl.closest('[data-habit-id]');
-            if (li) dayDetail.changeCounter(li.dataset.habitId, 1);
+            if (li) dayDetail.openEdit(li.dataset.habitId);
             break;
         }
 
-        case 'day-counter-decrement': {
-            event.stopPropagation();
-            const li = actionEl.closest('[data-habit-id]');
-            if (li) dayDetail.changeCounter(li.dataset.habitId, -1);
+        case 'counter-edit-increment':
+            dayDetail.changeEditValue(1);
             break;
-        }
+
+        case 'counter-edit-decrement':
+            dayDetail.changeEditValue(-1);
+            break;
+
+        case 'counter-edit-done':
+            dayDetail.saveEdit();
+            break;
+
+        case 'counter-edit-close':
+            dayDetail.closeEdit();
+            break;
 
         case 'open-clear-data':
             showSheet('clear-data');
