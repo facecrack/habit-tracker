@@ -281,12 +281,26 @@
    DAY COUNTER SUBTITLE — tappable value row with edit icon
    ============================================ */
 
-.day-counter-subtitle {
-    display: inline-flex;
+.day-counter-edit-area {
+    display: flex;
     align-items: center;
-    background: var(--bg-primary);
-    border-radius: var(--radius-sm);
-    padding: 2px 8px;
-    margin-top: 2px;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    text-align: left;
     -webkit-tap-highlight-color: transparent;
+}
+
+.day-counter-streak-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.day-counter-edit-icon {
+    width: 10px;
+    height: 10px;
+    filter: brightness(0) saturate(100%) invert(55%);
+    flex-shrink: 0;
 }

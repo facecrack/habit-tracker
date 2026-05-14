@@ -99,13 +99,16 @@ function renderDayList() {
         if (habit.type === 'counter') {
             return `
                 <li class="day-habit${isDone ? ' day-habit-done' : ''}" data-habit-id="${habit.id}">
-                    <div class="habit-icon" style="background-color: ${bgColor};">${habit.icon}</div>
-                    <div class="habit-info">
-                        <h3 class="habit-name">${render.escapeHtml(habit.name)}</h3>
-                        <button class="day-counter-subtitle" data-action="day-counter-edit">
-                            <span class="habit-streak">${value} / ${target}${habit.unit ? render.escapeHtml(habit.unit) : ''}</span>
-                        </button>
-                    </div>
+                    <button class="day-counter-edit-area" data-action="day-counter-edit">
+                        <div class="habit-icon" style="background-color: ${bgColor};">${habit.icon}</div>
+                        <div class="habit-info">
+                            <h3 class="habit-name">${render.escapeHtml(habit.name)}</h3>
+                            <p class="habit-streak day-counter-streak-row">
+                                <span>${value} / ${target}${habit.unit ? render.escapeHtml(habit.unit) : ''}</span>
+                                <img src="icons/edit.svg" alt="" class="day-counter-edit-icon">
+                            </p>
+                        </div>
+                    </button>
                     ${controls}
                 </li>
             `;
@@ -148,8 +151,8 @@ function _updateDayHabitEl(habitId) {
 
     if (habit.type === 'counter') {
         const value = typeof entry === 'number' ? entry : 0;
-        const streakEl = li.querySelector('.habit-streak');
-        if (streakEl) streakEl.textContent = `${value} / ${target}${habit.unit ? habit.unit : ''}`;
+        const streakSpan = li.querySelector('.day-counter-streak-row span');
+        if (streakSpan) streakSpan.textContent = `${value} / ${target}${habit.unit ? habit.unit : ''}`;
     }
 }
 
