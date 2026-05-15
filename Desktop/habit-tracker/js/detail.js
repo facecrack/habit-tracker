@@ -123,14 +123,13 @@ function renderCounterDetail(habit) {
         todayValueEl.style.color = (!isInactive && isOverLimit) ? 'var(--status-red)' : '';
     }
 
-    const todayTarget = screen.querySelector('.today-block-target');
-    if (todayTarget) {
-        todayTarget.textContent = `/ ${effectiveTarget}${habit.unit ? habit.unit : ''}`;
-        todayTarget.classList.toggle('today-block-target--overridden', isOverridden);
+    const todayTargetBtn = screen.querySelector('.today-block-target');
+    if (todayTargetBtn) {
+        const textEl = todayTargetBtn.querySelector('.today-block-target-text');
+        if (textEl) textEl.textContent = `/ ${effectiveTarget}${habit.unit ? habit.unit : ''}`;
+        todayTargetBtn.classList.toggle('today-block-target--overridden', isOverridden);
+        todayTargetBtn.hidden = isInactive;
     }
-
-    const editTargetBtn = screen.querySelector('.today-target-edit-btn');
-    if (editTargetBtn) editTargetBtn.hidden = isInactive;
 
     const todayBar = screen.querySelector('.today-block-bar-fill');
     if (todayBar) {
