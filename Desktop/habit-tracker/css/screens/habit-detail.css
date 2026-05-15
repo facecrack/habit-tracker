@@ -110,9 +110,9 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: transparent;
-    padding: 2px 6px 2px 4px;
-    border-radius: 6px;
+    background: var(--bg-elevated);
+    padding: 3px 8px 3px 6px;
+    border-radius: 8px;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -121,7 +121,7 @@
 }
 
 .today-block-target:active {
-    background: var(--bg-card);
+    opacity: 0.6;
 }
 
 .today-block-bar {
