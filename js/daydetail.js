@@ -196,13 +196,14 @@ function openCounterEdit(habitId) {
     overlay.querySelector('.counter-edit-name').textContent = habit.name;
     overlay.querySelector('.counter-edit-hint').textContent = `/ ${habit.target}${habit.unit || ''}`;
 
+    overlay.hidden = false;
+
     const input = document.getElementById('counterEditInput');
     if (input) {
-        input.value = _editValue > 0 ? _editValue : '';
-        setTimeout(() => { input.focus(); input.select(); }, 50);
+        input.value = _editValue > 0 ? String(_editValue) : '';
+        input.focus();
+        input.select();
     }
-
-    overlay.hidden = false;
 }
 
 function saveCounterEdit() {
