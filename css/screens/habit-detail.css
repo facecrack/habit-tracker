@@ -115,7 +115,6 @@
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
-    border-bottom: 1px dashed var(--text-secondary);
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -137,8 +136,8 @@
 }
 
 .today-target-edit-icon {
-    width: 11px;
-    height: 11px;
+    width: 13px;
+    height: 13px;
     filter: brightness(0) saturate(100%) invert(45%);
     flex-shrink: 0;
 }

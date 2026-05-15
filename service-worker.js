@@ -2,7 +2,7 @@
  * Service Worker — кэш + уведомления.
  */
 
-const CACHE_NAME = 'tickly-v101';
+const CACHE_NAME = 'tickly-v102';
 const SCOPE = self.registration.scope;
 
 function url(path) {

@@ -265,7 +265,7 @@
 .daily-target-reset {
     width: 100%;
     height: 48px;
-    background: var(--bg-elevated);
+    background: var(--status-red-25);
     border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: 500;
