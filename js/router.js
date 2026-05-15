@@ -335,14 +335,6 @@ case 'stat-tab':
             break;
         }
 
-        case 'counter-edit-increment':
-            dayDetail.changeEditValue(1);
-            break;
-
-        case 'counter-edit-decrement':
-            dayDetail.changeEditValue(-1);
-            break;
-
         case 'counter-edit-done':
             dayDetail.saveEdit();
             break;

@@ -1280,17 +1280,11 @@
         <div class="counter-edit-backdrop" data-action="counter-edit-close"></div>
         <div class="counter-edit-modal">
             <p class="counter-edit-name"></p>
-            <div class="counter-edit-value-block">
-                <span class="counter-edit-value"></span>
+            <div class="counter-edit-input-block">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="counterEditInput" class="counter-edit-input" placeholder="0">
                 <p class="counter-edit-hint"></p>
             </div>
-            <div class="counter-edit-actions">
-                <div class="counter-edit-controls">
-                    <button class="counter-edit-btn counter-edit-btn-minus" data-action="counter-edit-decrement"></button>
-                    <button class="counter-edit-btn counter-edit-btn-plus" data-action="counter-edit-increment"></button>
-                </div>
-                <button class="counter-edit-done-btn" data-action="counter-edit-done">Done</button>
-            </div>
+            <button class="counter-edit-done-btn" data-action="counter-edit-done">Done</button>
         </div>
     </div>
 

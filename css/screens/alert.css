@@ -238,65 +238,38 @@
     text-align: center;
 }
 
-.counter-edit-value-block {
+.counter-edit-input-block {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 8px 0;
+    gap: 8px;
+    width: 100%;
 }
 
-.counter-edit-value {
-    font-size: 40px;
+.counter-edit-input {
+    width: 100%;
+    height: 72px;
+    background: var(--bg-elevated);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: 36px;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1;
+    text-align: center;
+    -webkit-appearance: none;
+    appearance: none;
+    caret-color: var(--brand-lime);
+}
+
+.counter-edit-input:focus {
+    border-color: var(--brand-lime);
+    outline: none;
 }
 
 .counter-edit-hint {
     font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
-}
-
-.counter-edit-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-}
-
-.counter-edit-controls {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-}
-
-.counter-edit-btn {
-    flex: 1;
-    height: 52px;
-    border-radius: var(--radius-md);
-    font-size: 15px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-.counter-edit-btn-minus {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-}
-
-.counter-edit-btn-minus:disabled {
-    color: var(--text-secondary);
-}
-
-.counter-edit-btn-plus {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
 }
 
 .counter-edit-done-btn {

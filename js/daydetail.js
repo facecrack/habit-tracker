@@ -193,47 +193,26 @@ function openCounterEdit(habitId) {
     const overlay = document.querySelector('[data-overlay="counter-edit"]');
     if (!overlay) return;
 
-    const step = habit.step || 1;
     overlay.querySelector('.counter-edit-name').textContent = habit.name;
-    overlay.querySelector('.counter-edit-btn-minus').textContent = `−${step}`;
-    overlay.querySelector('.counter-edit-btn-plus').textContent = `+${step}`;
     overlay.querySelector('.counter-edit-hint').textContent = `/ ${habit.target}${habit.unit || ''}`;
 
-    _refreshEditDisplay(overlay, habit);
-    overlay.hidden = false;
-}
-
-function _refreshEditDisplay(overlay, habit) {
-    const target = habit.target || 1;
-    const isOverLimit = !!habit.limitMode && _editValue > target;
-
-    const valEl = overlay.querySelector('.counter-edit-value');
-    if (valEl) {
-        valEl.textContent = _editValue;
-        valEl.style.color = isOverLimit ? 'var(--status-red)' : '';
+    const input = document.getElementById('counterEditInput');
+    if (input) {
+        input.value = _editValue > 0 ? _editValue : '';
+        setTimeout(() => { input.focus(); input.select(); }, 50);
     }
 
-    const minusBtn = overlay.querySelector('.counter-edit-btn-minus');
-    if (minusBtn) minusBtn.disabled = _editValue <= 0;
-}
-
-function changeEditValue(delta) {
-    const habit = storage.getHabit(_editHabitId);
-    if (!habit) return;
-
-    const step = habit.step || 1;
-    _editValue = Math.max(0, _editValue + delta * step);
-
-    const overlay = document.querySelector('[data-overlay="counter-edit"]');
-    if (overlay) _refreshEditDisplay(overlay, habit);
-
-    if (navigator.vibrate) navigator.vibrate(5);
+    overlay.hidden = false;
 }
 
 function saveCounterEdit() {
     if (!_editHabitId) return;
 
-    storage.setEntry(_editHabitId, _dayKey, _editValue === 0 ? null : _editValue);
+    const input = document.getElementById('counterEditInput');
+    const raw = input ? parseInt(input.value, 10) : NaN;
+    const value = (!isNaN(raw) && raw > 0) ? raw : 0;
+
+    storage.setEntry(_editHabitId, _dayKey, value === 0 ? null : value);
     _updateDayHabitEl(_editHabitId);
     _refreshMeta();
     render.refreshMoods();
@@ -252,7 +231,6 @@ window.dayDetail = {
     open: openDayDetail,
     toggle: toggleHabitForDay,
     openEdit: openCounterEdit,
-    changeEditValue,
     saveEdit: saveCounterEdit,
     closeEdit: closeCounterEdit,
 };
