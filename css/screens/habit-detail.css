@@ -110,18 +110,17 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: var(--bg-elevated);
-    padding: 3px 8px 3px 6px;
-    border-radius: 8px;
+    background: transparent;
+    padding: 0;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
+    border-bottom: 1px dashed var(--text-secondary);
     -webkit-tap-highlight-color: transparent;
-    margin-bottom: -2px;
 }
 
 .today-block-target:active {
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .today-block-bar {
