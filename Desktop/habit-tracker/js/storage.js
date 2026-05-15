@@ -13,10 +13,14 @@ const DEFAULT_DATA = {
     habits: [],
     settings: {
         theme: 'default',
-        remindersEnabled: true,
+        remindersEnabled: false,
         sound: 'gentle-chime',
+        vibrate: true,
         startWeekOn: 'monday',
-        timeFormat: '24h'
+        timeFormat: '24h',
+        archiveTipShown: false,
+        hintShown: false,
+        lastStatTab: 'weekly'
     },
     version: 1
 };
@@ -26,31 +30,30 @@ const DEFAULT_DATA = {
 // БАЗОВЫЕ ФУНКЦИИ
 // ============================================
 
-/**
- * Загрузить все данные из localStorage.
- * Если данных нет — вернуть дефолтные.
- */
-function loadData() {
-    const raw = localStorage.getItem(STORAGE_KEY);
+let _cache = null;
 
+function loadData() {
+    if (_cache) return _cache;
+
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-        // Первый запуск — возвращаем дефолтные данные
-        return structuredClone(DEFAULT_DATA);
+        _cache = structuredClone(DEFAULT_DATA);
+        return _cache;
     }
 
     try {
-        return JSON.parse(raw);
+        _cache = migrateData(JSON.parse(raw));
+        return _cache;
     } catch (error) {
         console.error('Не удалось распарсить данные из localStorage:', error);
-        return structuredClone(DEFAULT_DATA);
+        _cache = structuredClone(DEFAULT_DATA);
+        return _cache;
     }
 }
 
 
-/**
- * Сохранить все данные в localStorage целиком.
- */
 function saveData(data) {
+    _cache = data;
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
@@ -59,12 +62,33 @@ function saveData(data) {
 }
 
 
-/**
- * Полностью очистить все данные (для разработки или сброса).
- */
 function clearData() {
+    _cache = null;
     localStorage.removeItem(STORAGE_KEY);
-    console.log('Все данные удалены');
+}
+
+
+// Нормализует устаревшие значения в старых данных
+function migrateData(data) {
+    if (!Array.isArray(data.habits)) return data;
+    data.habits.forEach((habit) => {
+        if (!habit.entries) return;
+        Object.keys(habit.entries).forEach((key) => {
+            if (habit.entries[key] === 'skipped') habit.entries[key] = 'Skipped';
+        });
+        if (habit.archived === undefined) habit.archived = false;
+        if (habit.type === 'counter' && habit.limitMode === undefined) habit.limitMode = false;
+        if (habit.reminders === undefined) {
+            if (habit.reminder && habit.reminder.enabled && habit.reminder.time) {
+                habit.reminders = [{ time: habit.reminder.time }];
+            } else {
+                habit.reminders = [];
+            }
+            delete habit.reminder;
+        }
+        if (habit.dailyOverrides === undefined) habit.dailyOverrides = {};
+    });
+    return data;
 }
 
 
@@ -142,6 +166,33 @@ function deleteHabit(id) {
 
 
 /**
+ * Переставить привычки внутри одной секции (binary или counter).
+ * newIds — новый порядок ID для этой секции.
+ * Привычки другого типа остаются на своих позициях в массиве.
+ */
+function reorderHabitsInSection(newIds) {
+    const data = loadData();
+    const habits = data.habits;
+
+    // Найти индексы этих привычек в исходном массиве (отсортированные)
+    const sectionIndices = newIds
+        .map(id => habits.findIndex(h => h.id === id))
+        .filter(i => i !== -1)
+        .sort((a, b) => a - b);
+
+    // Поставить переупорядоченные привычки на те же индексы
+    const reordered = [...habits];
+    newIds.forEach((id, i) => {
+        const habit = habits.find(h => h.id === id);
+        if (habit) reordered[sectionIndices[i]] = habit;
+    });
+
+    data.habits = reordered;
+    saveData(data);
+}
+
+
+/**
  * Записать значение для привычки на дату.
  * Для binary: value — это "done" / "skipped" / "missed"
  * Для counter: value — это число
@@ -166,6 +217,20 @@ function setEntry(habitId, dateString, value) {
 }
 
 
+function setDailyOverride(habitId, dateString, value) {
+    const data = loadData();
+    const habit = data.habits.find(h => h.id === habitId);
+    if (!habit) return;
+    if (!habit.dailyOverrides) habit.dailyOverrides = {};
+    if (value === null || value === undefined) {
+        delete habit.dailyOverrides[dateString];
+    } else {
+        habit.dailyOverrides[dateString] = value;
+    }
+    saveData(data);
+}
+
+
 // ============================================
 // РАБОТА С НАСТРОЙКАМИ
 // ============================================
@@ -175,7 +240,7 @@ function setEntry(habitId, dateString, value) {
  */
 function getSettings() {
     const data = loadData();
-    return data.settings;
+    return { ...DEFAULT_DATA.settings, ...data.settings };
 }
 
 
@@ -210,10 +275,18 @@ function getTodayString() {
 // ДЕЛАЕМ ДОСТУПНЫМ ИЗ КОНСОЛИ И ИЗ app.js
 // ============================================
 
+function clearAllEntries() {
+    const data = loadData();
+    data.habits.forEach(h => { h.entries = {}; });
+    saveData(data);
+}
+
+
 window.storage = {
     loadData,
     saveData,
     clearData,
+    clearAllEntries,
     getHabits,
     getHabit,
     addHabit,
@@ -222,5 +295,7 @@ window.storage = {
     setEntry,
     getSettings,
     updateSettings,
-    getTodayString
+    getTodayString,
+    reorderHabitsInSection,
+    setDailyOverride
 };

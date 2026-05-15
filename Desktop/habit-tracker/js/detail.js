@@ -5,6 +5,7 @@
 
 let currentDetailHabitId = null;
 let heatmapMonthOffset = 0;  // 0 = текущий месяц, -1 = прошлый и т.д.
+let chartOffset = 0;          // 0 = последние 7 дней, 1 = предыдущие 7 и т.д.
 
 
 // ============================================
@@ -17,6 +18,7 @@ function openHabitDetail(habitId) {
 
     currentDetailHabitId = habitId;
     heatmapMonthOffset = 0;
+    chartOffset = 0;
 
     if (habit.type === 'binary') {
         showScreen('habit-detail-binary');
@@ -47,6 +49,12 @@ function renderBinaryDetail(habit) {
 
     const meta = screen.querySelector('.detail-meta');
     if (meta) meta.textContent = formatSchedule(habit.schedule);
+
+    // Pause state
+    const banner = screen.querySelector('.detail-paused-banner');
+    if (banner) banner.hidden = !habit.paused;
+
+    updatePauseBtn(screen, habit.paused);
 
     // Stats
     const stats = calculateStats(habit);
@@ -81,30 +89,62 @@ function renderCounterDetail(habit) {
     if (name) name.textContent = habit.name;
 
     const meta = screen.querySelector('.detail-meta');
-    if (meta) meta.textContent = `${formatSchedule(habit.schedule)} / ${habit.target} ${habit.unit}`;
+    if (meta) meta.textContent = `${formatSchedule(habit.schedule)} / ${habit.target}${habit.unit ? habit.unit : ''}`;
+
+    // Pause state
+    const banner = screen.querySelector('.detail-paused-banner');
+    if (banner) banner.hidden = !habit.paused;
+
+    updatePauseBtn(screen, habit.paused);
 
     // Today block
     const today = storage.getTodayString();
     const rawValue = habit.entries[today];
-    const isSkipped = rawValue === 'Skipped' || rawValue === 'skipped';
+    const isSkipped = rawValue === 'Skipped';
+    const isPaused = !!habit.paused;
+    const isInactive = isSkipped || isPaused;
     const todayValue = typeof rawValue === 'number' ? rawValue : 0;
-    const target = habit.target || 1;
-    const percent = isSkipped ? 0 : Math.min(100, Math.round((todayValue / target) * 100));
+    const effectiveTarget = getEffectiveTarget(habit, today);
+    const isOverridden = !!(habit.dailyOverrides?.[today]);
+    const rawPercent = isInactive ? 0 : Math.round((todayValue / effectiveTarget) * 100);
+    const displayPercent = habit.limitMode ? rawPercent : Math.min(100, rawPercent);
+    const barPercent = Math.min(100, rawPercent);
+
+    const isComplete = !habit.limitMode && todayValue >= effectiveTarget;
+    const isOverLimit = !!habit.limitMode && todayValue > effectiveTarget;
 
     const todayPercent = screen.querySelector('.today-block-percent');
-    if (todayPercent) todayPercent.textContent = percent + '%';
+    if (todayPercent) todayPercent.textContent = displayPercent + '%';
 
     const todayValueEl = screen.querySelector('.today-block-value');
     if (todayValueEl) {
-        todayValueEl.textContent = isSkipped ? 'Skipped' : todayValue;
-        todayValueEl.classList.toggle('today-block-value-skipped', isSkipped);
+        todayValueEl.textContent = isPaused ? 'Paused' : todayValue;
+        todayValueEl.classList.toggle('today-block-value-skipped', isInactive);
+        todayValueEl.style.color = (!isInactive && isOverLimit) ? 'var(--status-red)' : '';
     }
 
     const todayTarget = screen.querySelector('.today-block-target');
-    if (todayTarget) todayTarget.textContent = `/ ${target} ${habit.unit}`;
+    if (todayTarget) {
+        todayTarget.textContent = `/ ${effectiveTarget}${habit.unit ? habit.unit : ''}`;
+        todayTarget.classList.toggle('today-block-target--overridden', isOverridden);
+    }
+
+    const editTargetBtn = screen.querySelector('.today-target-edit-btn');
+    if (editTargetBtn) editTargetBtn.hidden = isInactive;
 
     const todayBar = screen.querySelector('.today-block-bar-fill');
-    if (todayBar) todayBar.style.width = (isSkipped ? 0 : percent) + '%';
+    if (todayBar) {
+        todayBar.style.width = (isInactive ? 0 : barPercent) + '%';
+        if (isInactive) {
+            todayBar.style.background = '';
+        } else if (isOverLimit) {
+            todayBar.style.background = 'var(--status-red)';
+        } else if (isComplete || habit.limitMode) {
+            todayBar.style.background = 'var(--brand-lime)';
+        } else {
+            todayBar.style.background = '';
+        }
+    }
 
     // Stats
     const stats = calculateStats(habit);
@@ -115,12 +155,12 @@ function renderCounterDetail(habit) {
     }
     if (statValues[1]) statValues[1].textContent = stats.average;
     if (statValues[2]) statValues[2].textContent = stats.bestValue;
+    const bestLabel = screen.querySelectorAll('.stats-grid .stat-label')[2];
+    if (bestLabel) bestLabel.textContent = habit.limitMode ? 'Lowest' : 'Best';
 
     // Bar chart за 7 дней
     renderChart(habit);
 
-    const chartUnit = screen.querySelector('.chart-unit');
-    if (chartUnit) chartUnit.textContent = habit.unit;
 }
 
 
@@ -144,6 +184,15 @@ function renderHeatmap(habit) {
     const targetMonth = new Date(today.getFullYear(), today.getMonth() + heatmapMonthOffset, 1);
     const monthName = targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     title.textContent = monthName;
+
+    // Кнопки навигации: next — на текущем месяце, prev — на месяце создания
+    const heatmapNextBtn = screen.querySelector('[data-action="heatmap-next"]');
+    if (heatmapNextBtn) heatmapNextBtn.disabled = heatmapMonthOffset === 0;
+    const heatmapPrevBtn = screen.querySelector('[data-action="heatmap-prev"]');
+    if (heatmapPrevBtn) {
+        const monthsBack = (today.getFullYear() - created.getFullYear()) * 12 + (today.getMonth() - created.getMonth());
+        heatmapPrevBtn.disabled = heatmapMonthOffset <= -monthsBack;
+    }
 
     grid.innerHTML = '';
 
@@ -179,14 +228,14 @@ function renderHeatmap(habit) {
         const isFuture = d > today;
         const isBeforeCreated = d < created;
         const isDone = entry === 'done' || (typeof entry === 'number' && entry >= (habit.target || 1));
-        const isSkipped = entry === 'Skipped' || entry === 'skipped';
+        const isSkipped = entry === 'Skipped';
 
         if (isFuture || isBeforeCreated) {
             // Пустая ячейка — но цифру оставляем приглушённой
             cell.classList.add('heatmap-cell-other');
         } else if (isDone) {
             cell.classList.add('heatmap-cell-done');
-        } else if (isSkipped) {
+        } else if (isSkipped || isInPauseWindow(habit, d)) {
             cell.classList.add('heatmap-cell-skipped');
         } else if (isToday) {
             // Сегодня и не done — белая обводка
@@ -214,9 +263,13 @@ function renderHeatmap(habit) {
 
 
 function changeHeatmapMonth(delta) {
-    heatmapMonthOffset += delta;
     const habit = storage.getHabit(currentDetailHabitId);
-    if (habit) renderHeatmap(habit);
+    if (!habit) return;
+    const created = parseLocalDate(habit.createdAt);
+    const now = new Date();
+    const monthsBack = (now.getFullYear() - created.getFullYear()) * 12 + (now.getMonth() - created.getMonth());
+    heatmapMonthOffset = Math.max(-monthsBack, Math.min(0, heatmapMonthOffset + delta));
+    renderHeatmap(habit);
 }
 
 
@@ -229,37 +282,65 @@ function renderChart(habit) {
     const chartBars = screen.querySelector('.chart-bars');
     if (!chartBars) return;
 
-    const days = [];
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const todayKey = formatDateKey(now);
+
+    // Конец периода: сегодня - offset*7
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() - chartOffset * 7);
+
+    const days = [];
     for (let i = 6; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(now.getDate() - i);
+        const d = new Date(endDate);
+        d.setDate(endDate.getDate() - i);
+        d.setHours(0, 0, 0, 0);
         const key = formatDateKey(d);
         const rawValue = habit.entries[key];
-        const isSkipped = rawValue === 'Skipped' || rawValue === 'skipped';
-        const value = typeof rawValue === 'number' ? rawValue : 0;
+        const isPaused = isInPauseWindow(habit, d);
+        const isSkipped = rawValue === 'Skipped' || isPaused;
+        const value = typeof rawValue === 'number' && !isPaused ? rawValue : 0;
         days.push({
             date: d,
             key: key,
             value: value,
             isSkipped: isSkipped,
-            isToday: i === 0
+            isToday: key === todayKey
         });
     }
 
-    const target = habit.target || 1;
-    const maxValue = Math.max(target, ...days.map((d) => d.value));
+    // Заголовок — диапазон дат
+    const chartTitle = screen.querySelector('.chart-title');
+    if (chartTitle) {
+        const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        chartTitle.textContent = `${fmt(days[0].date)} – ${fmt(days[6].date)}`;
+    }
+
+    // Кнопки навигации: next задизейблена на текущей неделе, prev — на 8-й (max)
+    const nextBtn = screen.querySelector('[data-action="chart-next"]');
+    if (nextBtn) nextBtn.disabled = chartOffset === 0;
+    const prevBtn = screen.querySelector('[data-action="chart-prev"]');
+    if (prevBtn) prevBtn.disabled = chartOffset >= 7;
+
+    const defaultTarget = habit.target || 1;
+    const maxValue = Math.max(defaultTarget, ...days.map((d) => d.value));
 
     chartBars.innerHTML = days.map((d) => {
-        const reachedTarget = d.value >= target;
+        const dayTarget = getEffectiveTarget(habit, d.key);
+        const reachedTarget = habit.limitMode
+            ? (d.value > 0 && d.value <= dayTarget)
+            : d.value >= dayTarget;
+        const overLimit = habit.limitMode && d.value > dayTarget;
         const heightPx = maxValue > 0 ? Math.round((d.value / maxValue) * 80) : 0;
-        const colorClass = d.isSkipped ? 'bar-skipped' : (reachedTarget ? 'bar-lime' : 'bar-purple');
+        const colorClass = d.isSkipped ? 'bar-skipped'
+            : overLimit ? 'bar-red'
+            : reachedTarget ? 'bar-lime'
+            : 'bar-purple';
         const todayClass = d.isToday ? 'bar-col-today' : '';
-        // Skipped — короткая серая полоска вместо нулевого столбика, но значение = 0
         const finalHeight = d.isSkipped ? 8 : heightPx;
         return `
             <div class="bar-col ${todayClass}">
-                <span class="bar-value">${d.value}</span>
+                <span class="bar-value">${d.isSkipped ? '' : d.value}</span>
                 <div class="bar ${colorClass}" style="height: ${finalHeight}px;"></div>
             </div>
         `;
@@ -276,51 +357,75 @@ function renderChart(habit) {
 }
 
 
+function changeChartWeek(delta) {
+    const habit = storage.getHabit(currentDetailHabitId);
+    if (!habit) return;
+    chartOffset = Math.max(0, Math.min(7, chartOffset + delta));
+    renderChart(habit);
+}
+
+
 // ============================================
 // УТИЛИТЫ
 // ============================================
 
-// Парсит "YYYY-MM-DD" как локальную дату без UTC-сюрпризов
-function parseLocalDate(str) {
-    const [y, m, d] = str.split('-').map(Number);
-    return new Date(y, m - 1, d);
-}
-
-
 function calculateStats(habit) {
     const entries = habit.entries;
-    const dates = Object.keys(entries).sort();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const target = habit.target || 1;
 
-    // Current streak — от сегодня назад
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+    // Current streak — от сегодня назад, пропускаем незапланированные дни и паузу
     let currentStreak = 0;
-    for (let i = 0; i < 365; i++) {
+    const todayKey = formatDateKey(today);
+    const todayEntry = entries[todayKey];
+    const todayTarget = getEffectiveTarget(habit, todayKey);
+    const todayDone = habit.limitMode
+        ? (typeof todayEntry === 'number' && todayEntry > 0 && todayEntry <= todayTarget)
+        : (todayEntry === 'done' || (typeof todayEntry === 'number' && todayEntry >= todayTarget));
+    const startOffset = todayDone ? 0 : 1;
+    for (let i = startOffset; i < 365; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
+        const dayKey = dayKeys[d.getDay()];
+        if (!habit.schedule.includes(dayKey)) continue;
+        if (isInPauseWindow(habit, d)) continue;
         const key = formatDateKey(d);
         const entry = entries[key];
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
-        if (isDone) {
-            currentStreak++;
+        const target = getEffectiveTarget(habit, key);
+        const isSkipped = entry === 'Skipped';
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
+        if (isDone || isSkipped) {
+            if (isDone) currentStreak++;
         } else {
             break;
         }
     }
 
-    // Best streak за последний год
+    // Best streak за последний год, пропускаем незапланированные дни и паузу
     let bestStreak = 0;
     let tempStreak = 0;
     for (let i = 365; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
+        const dayKey = dayKeys[d.getDay()];
+        if (!habit.schedule.includes(dayKey)) continue;
+        if (isInPauseWindow(habit, d)) continue;
         const key = formatDateKey(d);
         const entry = entries[key];
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
-        if (isDone) {
-            tempStreak++;
-            if (tempStreak > bestStreak) bestStreak = tempStreak;
+        const target = getEffectiveTarget(habit, key);
+        const isSkipped = entry === 'Skipped';
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
+        if (isDone || isSkipped) {
+            if (isDone) {
+                tempStreak++;
+                if (tempStreak > bestStreak) bestStreak = tempStreak;
+            }
         } else {
             tempStreak = 0;
         }
@@ -336,7 +441,7 @@ function calculateStats(habit) {
         const cursor = new Date(created);
         while (cursor <= today) {
             const dayKey = dayKeys[(cursor.getDay() + 6) % 7];
-            if (habit.schedule.includes(dayKey)) {
+            if (habit.schedule.includes(dayKey) && !isInPauseWindow(habit, cursor)) {
                 scheduled++;
                 const key = formatDateKey(cursor);
                 if (entries[key] === 'done') done++;
@@ -353,7 +458,7 @@ function calculateStats(habit) {
         const values = Object.values(entries).filter((v) => typeof v === 'number');
         if (values.length > 0) {
             average = (values.reduce((s, v) => s + v, 0) / values.length).toFixed(1);
-            bestValue = Math.max(...values);
+            bestValue = habit.limitMode ? Math.min(...values) : Math.max(...values);
         }
     }
 
@@ -385,11 +490,20 @@ function isHabitDay(habit, date) {
 }
 
 
-function formatDateKey(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+function updatePauseBtn(screen, isPaused) {
+    const pauseBtn   = screen.querySelector('.detail-pause-btn');
+    const archiveBtn = screen.querySelector('.detail-archive-btn');
+    const resumeBtn  = screen.querySelector('.detail-resume-btn');
+
+    if (isPaused) {
+        if (pauseBtn)   pauseBtn.hidden   = true;
+        if (archiveBtn) archiveBtn.hidden = true;
+        if (resumeBtn)  resumeBtn.hidden  = false;
+    } else {
+        if (pauseBtn)   pauseBtn.hidden   = false;
+        if (archiveBtn) archiveBtn.hidden = false;
+        if (resumeBtn)  resumeBtn.hidden  = true;
+    }
 }
 
 
@@ -397,8 +511,66 @@ function formatDateKey(date) {
 // ДОСТУПНОСТЬ
 // ============================================
 
+// ============================================
+// DAILY TARGET OVERRIDE
+// ============================================
+
+function openTodayTargetOverride() {
+    const habit = storage.getHabit(currentDetailHabitId);
+    if (!habit || habit.type !== 'counter') return;
+
+    const today = storage.getTodayString();
+    const effectiveTarget = getEffectiveTarget(habit, today);
+    const isOverridden = !!(habit.dailyOverrides?.[today]);
+
+    const input = document.getElementById('dailyTargetInput');
+    if (input) input.value = effectiveTarget;
+
+    const resetBtn = document.querySelector('[data-action="clear-daily-target"]');
+    if (resetBtn) resetBtn.hidden = !isOverridden;
+
+    showSheet('daily-target');
+    if (input) {
+        input.focus();
+        input.select();
+    }
+}
+
+function saveTodayTarget() {
+    const input = document.getElementById('dailyTargetInput');
+    const raw = parseInt(input?.value, 10);
+    if (!raw || raw <= 0) return;
+
+    const habit = storage.getHabit(currentDetailHabitId);
+    if (!habit) return;
+
+    const today = storage.getTodayString();
+    const isDefault = raw === (habit.target || 1);
+    storage.setDailyOverride(currentDetailHabitId, today, isDefault ? null : raw);
+    hideSheet();
+
+    const updated = storage.getHabit(currentDetailHabitId);
+    renderCounterDetail(updated);
+    render.updateCounter(currentDetailHabitId);
+}
+
+function clearTodayTarget() {
+    const today = storage.getTodayString();
+    storage.setDailyOverride(currentDetailHabitId, today, null);
+    hideSheet();
+
+    const habit = storage.getHabit(currentDetailHabitId);
+    renderCounterDetail(habit);
+    render.updateCounter(currentDetailHabitId);
+}
+
+
 window.detail = {
     open: openHabitDetail,
     changeMonth: changeHeatmapMonth,
-    currentId: () => currentDetailHabitId
+    changeChartWeek,
+    currentId: () => currentDetailHabitId,
+    openTargetOverride: openTodayTargetOverride,
+    saveTodayTarget,
+    clearTodayTarget
 };

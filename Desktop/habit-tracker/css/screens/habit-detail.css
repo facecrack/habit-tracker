@@ -125,6 +125,31 @@
     border-radius: var(--radius-full);
 }
 
+.today-block-head-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.today-target-edit-btn {
+    background: transparent;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.today-target-edit-icon {
+    width: 12px;
+    height: 12px;
+    filter: brightness(0) saturate(100%) invert(45%);
+}
+
+.today-block-target--overridden {
+    color: var(--brand-lime);
+}
+
 
 /* ============================================
    STATS GRID — 3 блока: Streak / Average / Best
@@ -198,7 +223,7 @@
 
 .heatmap-nav {
     display: flex;
-    gap: 12px;
+    gap: 8px;
 }
 
 .heatmap-nav-btn {
@@ -214,6 +239,10 @@
 .heatmap-nav-btn img {
     width: 12px;
     height: 12px;
+    filter: brightness(0) invert(1);
+}
+
+.heatmap-nav-btn:disabled img {
     filter: brightness(0) saturate(100%) invert(48%);
 }
 
@@ -254,6 +283,7 @@
     font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
+    position: relative;
 }
 
 .heatmap-cell-other {
@@ -337,7 +367,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+}
+
+.chart-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .chart-title {
@@ -347,9 +383,36 @@
 }
 
 .chart-unit {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-secondary);
+}
+
+.chart-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-nav-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.chart-nav-btn img {
+    width: 12px;
+    height: 12px;
+    filter: brightness(0) invert(1);
+}
+
+.chart-nav-btn:disabled img {
+    filter: brightness(0) saturate(100%) invert(48%);
 }
 
 .chart-bars {
@@ -392,6 +455,10 @@
     background: var(--text-secondary);
 }
 
+.bar-red {
+    background: var(--status-red);
+}
+
 .chart-divider {
     height: 1px;
     background: var(--text-secondary);
@@ -430,6 +497,10 @@
     margin-bottom: 8px;
 }
 
+.detail-actions [hidden] {
+    display: none;
+}
+
 .action-btn {
     background: var(--bg-card);
     border-radius: var(--radius-md);
@@ -457,6 +528,12 @@
     filter: brightness(0) invert(1);
 }
 
+.action-archive-icon {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) invert(1);
+}
+
 .action-btn-delete {
     background: var(--status-red-25);
     color: var(--status-red);
@@ -472,3 +549,46 @@
     color: var(--text-secondary);
     font-weight: 500;
 }
+
+
+/* ============================================
+   PAUSED STATE
+   ============================================ */
+
+.detail-paused-banner {
+    background: rgba(229, 166, 50, 0.15);
+    border: 1px solid rgba(229, 166, 50, 0.35);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #E5A632;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.action-btn-pause {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.action-pause-icon {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+}
+
+.action-btn-resume {
+    background: rgba(178, 240, 65, 0.15);
+    color: var(--brand-lime);
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.action-btn-resume .action-pause-icon {
+    filter: brightness(0) saturate(100%) invert(89%) sepia(31%) saturate(1234%) hue-rotate(28deg) brightness(105%) contrast(95%);
+}
+
+

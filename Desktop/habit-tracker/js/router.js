@@ -5,6 +5,13 @@
 
 document.addEventListener('click', (event) => {
 
+    // THEME SWITCH
+    const themeOption = event.target.closest('.theme-option');
+    if (themeOption && themeOption.dataset.themeValue) {
+        settings.setTheme(themeOption.dataset.themeValue);
+        return;
+    }
+
     // TYPE SWITCH
     const typeOption = event.target.closest('.type-option');
     if (typeOption) {
@@ -33,13 +40,6 @@ document.addEventListener('click', (event) => {
         return;
     }
 
-    // REMINDER TOGGLE (form)
-    const reminderToggle = event.target.closest('.reminder .toggle');
-    if (reminderToggle) {
-        form.toggleReminder();
-        return;
-    }
-
     // ICON OPTION
     const iconOption = event.target.closest('.icon-option');
     if (iconOption) {
@@ -55,27 +55,6 @@ document.addEventListener('click', (event) => {
         const index = Array.from(allColors).indexOf(colorOption);
         const colors = ['#353535', '#6B71FF', '#B2F041', '#E5A632', '#F53942'];
         pickers.setDraftColor(colors[index]);
-        return;
-    }
-
-    // TIME STEP
-    const timeStepCell = event.target.closest('[data-action="time-step"]');
-    if (timeStepCell) {
-        const col = timeStepCell.closest('.time-col');
-        const allCells = col.querySelectorAll('.time-cell');
-        const idx = Array.from(allCells).indexOf(timeStepCell);
-        const direction = idx === 1 ? -1 : 1;
-        const allCols = col.parentElement.querySelectorAll('.time-col');
-        const colIdx = Array.from(allCols).indexOf(col);
-        const column = colIdx === 0 ? 'hour' : 'minute';
-        pickers.timeStep(direction, column);
-        return;
-    }
-
-    // TIME PERIOD
-    const timePeriod = event.target.closest('[data-action="time-period"]');
-    if (timePeriod) {
-        pickers.timeTogglePeriod();
         return;
     }
 
@@ -126,6 +105,7 @@ document.addEventListener('click', (event) => {
             const prev = window.getPreviousScreen();
             if (prev === 'statistic') {
                 statistic.open();
+                window.setPreviousScreen('main');
             } else if ((prev === 'habit-detail-binary' || prev === 'habit-detail-counter') && detail.currentId()) {
                 detail.open(detail.currentId());
             } else {
@@ -163,8 +143,20 @@ document.addEventListener('click', (event) => {
             pickers.saveIcon();
             break;
 
+        case 'toggle-reminder':
+            form.toggleReminder();
+            break;
+
+        case 'add-reminder':
+            form.addReminder();
+            break;
+
+        case 'remove-reminder':
+            form.removeReminder(parseInt(actionEl.dataset.reminderIndex || '0'));
+            break;
+
         case 'open-time-picker':
-            pickers.openTime();
+            pickers.openTime(parseInt(actionEl.dataset.reminderIndex || '0'));
             break;
 
         case 'save-time-picker':
@@ -173,6 +165,14 @@ document.addEventListener('click', (event) => {
 
         case 'open-unit-picker':
             pickers.openUnit();
+            break;
+
+        case 'set-mode-goal':
+            form.setLimitMode(false);
+            break;
+
+        case 'set-mode-limit':
+            form.setLimitMode(true);
             break;
 
         case 'step-decrement':
@@ -218,13 +218,40 @@ document.addEventListener('click', (event) => {
             detail.changeMonth(1);
             break;
 
+        case 'chart-prev':
+            detail.changeChartWeek(1);
+            break;
+
+        case 'chart-next':
+            detail.changeChartWeek(-1);
+            break;
+
         case 'edit-habit':
             form.openEdit(detail.currentId());
             break;
 
-        case 'skip-today':
-            habits.skipToday(detail.currentId());
+        case 'archive-habit':
+            habits.archive(detail.currentId());
             break;
+
+        case 'restore-habit':
+            habits.restore(actionEl.dataset.habitId);
+            break;
+
+        case 'open-archived':
+            settings.openArchived();
+            break;
+
+        case 'back-to-settings':
+            settings.render();
+            showScreen('settings');
+            break;
+
+        case 'mood-tap': {
+            const label = actionEl.dataset.moodLabel;
+            if (label) render.showMoodTooltip(actionEl, label);
+            break;
+        }
 
         case 'open-delete-alert':
             showAlert('delete-habit');
@@ -237,6 +264,14 @@ document.addEventListener('click', (event) => {
 
         case 'cancel-alert':
             hideAlert();
+            break;
+
+        case 'pause-habit':
+            habits.pause(detail.currentId());
+            break;
+
+        case 'resume-habit':
+            habits.resume(detail.currentId());
             break;
 
         case 'open-sound-picker':
@@ -259,6 +294,10 @@ document.addEventListener('click', (event) => {
             settings.export();
             break;
 
+        case 'import-data':
+            settings.import();
+            break;
+
 						case 'feedback-category':
     feedback.selectCategory(actionEl.dataset.category);
     break;
@@ -274,6 +313,81 @@ case 'send-feedback':
 case 'stat-tab':
     statistic.setTab(actionEl.dataset.tab);
     break;
+
+        case 'open-day': {
+            const dateKey = actionEl.dataset.dateKey;
+            const dateLabel = actionEl.dataset.dateLabel;
+            if (dateKey) dayDetail.open(dateKey, dateLabel);
+            break;
+        }
+
+        case 'day-habit-toggle': {
+            event.stopPropagation();
+            const li = actionEl.closest('[data-habit-id]');
+            if (li) dayDetail.toggle(li.dataset.habitId);
+            break;
+        }
+
+        case 'day-counter-edit': {
+            event.stopPropagation();
+            const li = actionEl.closest('[data-habit-id]');
+            if (li) dayDetail.openEdit(li.dataset.habitId);
+            break;
+        }
+
+        case 'counter-edit-increment':
+            dayDetail.changeEditValue(1);
+            break;
+
+        case 'counter-edit-decrement':
+            dayDetail.changeEditValue(-1);
+            break;
+
+        case 'counter-edit-done':
+            dayDetail.saveEdit();
+            break;
+
+        case 'counter-edit-close':
+            dayDetail.closeEdit();
+            break;
+
+        case 'open-clear-data':
+            showSheet('clear-data');
+            break;
+
+        case 'clear-history':
+            hideSheet();
+            showAlert('clear-history');
+            break;
+
+        case 'erase-all-data':
+            hideSheet();
+            showAlert('erase-all');
+            break;
+
+        case 'confirm-clear-history':
+            settings.clearHistory();
+            break;
+
+        case 'confirm-erase-all':
+            settings.eraseAll();
+            break;
+
+        case 'edit-today-target':
+            detail.openTargetOverride();
+            break;
+
+        case 'save-daily-target':
+            detail.saveTodayTarget();
+            break;
+
+        case 'cancel-daily-target':
+            hideSheet();
+            break;
+
+        case 'clear-daily-target':
+            detail.clearTodayTarget();
+            break;
     }
 });
 

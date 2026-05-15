@@ -2,9 +2,34 @@
  * Render — модуль рендеринга экранов из данных.
  */
 
+let _allDoneWasComplete = null;
+
+function checkAllDone() {
+    const habits = storage.getHabits().filter(h => !h.archived);
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const todayObj = {
+        date: todayDate,
+        key: storage.getTodayString(),
+        dayKey: dayNames[todayDate.getDay()],
+    };
+    const mood = calculateDayMood(habits, todayObj);
+    const allDone = mood !== null && mood.percent === 100;
+
+    const banner = document.querySelector('[data-screen="main"] .week-done');
+    if (banner) banner.classList.toggle('week-done-visible', allDone);
+
+    if (allDone && _allDoneWasComplete === false) {
+        sounds.playSuccess();
+        if (navigator.vibrate) navigator.vibrate([10, 40, 10, 40, 10]);
+    }
+    _allDoneWasComplete = allDone;
+}
+
 
 function renderMainScreen() {
-    const habits = storage.getHabits();
+    const habits = storage.getHabits().filter((h) => !h.archived);
 
     if (habits.length === 0) {
         renderEmptyDate();
@@ -25,6 +50,9 @@ function renderMainScreen() {
     renderBinaries(binaries);
 
     requestAnimationFrame(() => window.scrollTo(0, scrollY));
+
+    _allDoneWasComplete = null;
+    checkAllDone();
 }
 
 function renderLast5Days(habits) {
@@ -53,47 +81,70 @@ function renderLast5Days(habits) {
         });
     }
 
-    daysList.innerHTML = days.map((d) => `
-        <li class="day ${d.isToday ? 'day-today' : ''}">
-            <span class="day-name">${d.name}</span>
-            <span class="day-number">${d.number}</span>
-        </li>
-    `).join('');
+    const fullDayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    daysList.innerHTML = days.map((d) => {
+        if (d.isToday) {
+            return `
+                <li class="day day-today">
+                    <span class="day-name">${d.name}</span>
+                    <span class="day-number">${d.number}</span>
+                </li>
+            `;
+        }
+        const label = `${fullDayNames[d.date.getDay()]}, ${monthNames[d.date.getMonth()]} ${d.number}`;
+        return `
+            <li class="day day-past" data-action="open-day" data-date-key="${d.key}" data-date-label="${label}">
+                <span class="day-name">${d.name}</span>
+                <span class="day-number">${d.number}</span>
+            </li>
+        `;
+    }).join('');
 
     moodsList.innerHTML = days.map((d) => {
         const mood = calculateDayMood(habits, d);
         if (mood === null) {
-            // Нет запланированных привычек на этот день — нейтральный rest day
             return `<li class="mood mood-rest" aria-label="Rest day"></li>`;
         }
-        const file = moodFile(mood);
-        return `<li class="mood"><img src="moods/${file}" alt="${moodLabel(mood)}"></li>`;
+        const file = moodFile(mood.percent);
+        const label = moodLabel(mood.percent);
+        const tipText = `${mood.done}/${mood.scheduled} habit${mood.scheduled !== 1 ? 's' : ''}`;
+        return `<li class="mood" data-action="mood-tap" data-mood-label="${tipText}" data-date="${d.name}"><img src="moods/${file}" alt="${label}"></li>`;
     }).join('');
 }
 
 
-// Возвращает % (0..100) или null если на день не было запланировано ни одной привычки
+// Возвращает {percent, done, scheduled} или null если день без привычек
 function calculateDayMood(habits, day) {
     let scheduled = 0;
     let done = 0;
+    let hasAnyEntry = false;
 
     habits.forEach((habit) => {
+        if (isInPauseWindow(habit, day.date)) return;
         const created = parseLocalDate(habit.createdAt);
         if (day.date < created) return;
         if (!habit.schedule.includes(day.dayKey)) return;
 
         const entry = habit.entries[day.key];
-        const isSkipped = entry === 'Skipped' || entry === 'skipped';
-        if (isSkipped) return;  // skipped не учитывается ни в числителе, ни в знаменателе
+        const isSkipped = entry === 'Skipped';
+        if (entry !== undefined && entry !== null) hasAnyEntry = true;
+        if (isSkipped) return;
 
         scheduled++;
-        const target = habit.target || 1;
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= target);
+        const target = getEffectiveTarget(habit, day.key);
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
         if (isDone) done++;
     });
 
     if (scheduled === 0) return null;
-    return Math.round((done / scheduled) * 100);
+    // For today: hide mood until user logs at least one entry.
+    // For past days: missed habits count as 0% — don't hide as rest day.
+    if (!hasAnyEntry && day.key === storage.getTodayString()) return null;
+    return { percent: Math.round((done / scheduled) * 100), done, scheduled };
 }
 
 
@@ -117,6 +168,17 @@ function moodLabel(percent) {
 function parseLocalDate(str) {
     const [y, m, d] = str.split('-').map(Number);
     return new Date(y, m - 1, d);
+}
+
+
+// Проверяет, попадает ли дата в период паузы привычки
+function isInPauseWindow(habit, date) {
+    if (!habit.pausedAt) return false;
+    const pausedFrom = parseLocalDate(habit.pausedAt);
+    if (date < pausedFrom) return false;
+    if (habit.paused) return true;
+    if (habit.resumedAt) return date < parseLocalDate(habit.resumedAt);
+    return false;
 }
 
 
@@ -145,36 +207,71 @@ function renderCounters(counters) {
     const list = document.querySelector('[data-screen="main"] .counters-list');
     const meta = document.querySelector('[data-screen="main"] .counters .section-meta');
 
-    if (counters.length === 0) {
+    const todayDayKey = getTodayDayKey();
+    const scheduled = counters.filter(h => h.schedule.includes(todayDayKey));
+
+    if (scheduled.length === 0) {
         section.hidden = true;
         return;
     }
     section.hidden = false;
 
-    meta.textContent = `${counters.length} ${counters.length === 1 ? 'counter' : 'counters'}`;
+    const activeCount = scheduled.filter(h => !h.paused).length;
+    meta.textContent = `${activeCount} ${activeCount === 1 ? 'counter' : 'counters'}`;
 
     const todayKey = storage.getTodayString();
 
-    list.innerHTML = counters.map((habit) => {
+    list.innerHTML = scheduled.map((habit) => {
         const rawValue = habit.entries[todayKey];
-        const isSkipped = rawValue === 'Skipped';
         const value = typeof rawValue === 'number' ? rawValue : 0;
-        const target = habit.target || 1;
-        const percent = isSkipped ? 0 : Math.min(100, (value / target) * 100);
-        const displayValue = isSkipped ? 'skipped' : value;
-        const valueClass = isSkipped ? 'counter-value counter-value-skipped' : 'counter-value';
-        const isComplete = !isSkipped && value >= target;
+        const target = getEffectiveTarget(habit, todayKey);
+
+        if (habit.paused) {
+            return `
+                <li class="counter counter-paused" data-habit-id="${habit.id}" data-action="open-detail">
+                    <header class="counter-header">
+                        <div class="counter-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
+                        <div class="counter-header-info">
+                            <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                        </div>
+                    </header>
+                    <div class="counter-progress">
+                        <span class="counter-value counter-value-skipped">Paused</span>
+                        <span class="counter-target">/ ${target}</span>
+                    </div>
+                    <div class="counter-bar">
+                        <div class="counter-bar-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="counter-buttons">
+                        <button class="counter-btn counter-btn-minus" data-action="counter-decrement"${value <= 0 ? ' disabled' : ''}>−${habit.step || 1}</button>
+                        <button class="counter-btn counter-btn-plus" data-action="counter-increment">+${habit.step || 1}</button>
+                    </div>
+                </li>
+            `;
+        }
+
+        const percent = Math.min(100, (value / target) * 100);
+        const valueClass = 'counter-value';
+        const isComplete = !habit.limitMode && value >= target;
+        const isOverLimit = habit.limitMode && value > target;
+        const limitClass = habit.limitMode ? 'counter-limit' : '';
+        const stateClass = isComplete ? 'counter-done' : (isOverLimit ? 'counter-over-limit' : '');
+        const streak = calculateStreak(habit);
+        const streakHtml = streak > 0 ? `<p class="counter-streak">${streak} day streak</p>` : '';
 
         return `
-    				<li class="counter ${isComplete ? 'counter-done' : ''}" data-habit-id="${habit.id}" data-action="open-detail">
+            <li class="counter ${limitClass} ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
                 <header class="counter-header">
                     <div class="counter-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
-                    <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                    <div class="counter-header-info">
+                        <h3 class="counter-name">${escapeHtml(habit.name)}</h3>
+                        ${streakHtml}
+                    </div>
                 </header>
 
                 <div class="counter-progress">
-                    <span class="${valueClass}">${displayValue}</span>
-                    <span class="counter-target">/ ${target} ${escapeHtml(habit.unit || '')}</span>
+                    <span class="${valueClass}">${value}</span>
+                    <span class="counter-target">/ ${target}</span>
                 </div>
 
                 <div class="counter-bar">
@@ -182,16 +279,21 @@ function renderCounters(counters) {
                 </div>
 
                 <div class="counter-buttons">
-                    <button class="counter-btn counter-btn-minus" data-action="counter-decrement">
-                        <img src="icons/minus.svg" alt="Decrease">
-                    </button>
-                    <button class="counter-btn counter-btn-plus" data-action="counter-increment">
-                        <img src="icons/plus.svg" alt="Increase">
-                    </button>
+                    <button class="counter-btn counter-btn-minus" data-action="counter-decrement"${value <= 0 ? ' disabled' : ''}>−${habit.step || 1}</button>
+                    <button class="counter-btn counter-btn-plus" data-action="counter-increment">+${habit.step || 1}</button>
                 </div>
             </li>
         `;
     }).join('');
+
+    const activeCounters = scheduled.filter(h => !h.paused);
+    const allCountersDone = activeCounters.length > 0 && activeCounters.every(h => {
+        const v = h.entries[todayKey];
+        if (h.limitMode) return typeof v === 'number' && v > 0 && v <= getEffectiveTarget(h, todayKey);
+        return typeof v === 'number' && v >= getEffectiveTarget(h, todayKey);
+    });
+    const counterTitle = section.querySelector('.section-title');
+    if (counterTitle) counterTitle.classList.toggle('section-title-done', allCountersDone);
 }
 
 
@@ -212,23 +314,45 @@ function renderBinaries(binaries) {
 
     const todayKey = storage.getTodayString();
 
-    const doneCount = scheduled.filter((h) => h.entries[todayKey] === 'done').length;
-    meta.textContent = `${doneCount} of ${scheduled.length} done`;
+    const activeScheduled = scheduled.filter((h) => !h.paused);
+    const doneCount = activeScheduled.filter((h) => h.entries[todayKey] === 'done').length;
+    meta.textContent = `${doneCount} of ${activeScheduled.length} done`;
+
+    const title = section.querySelector('.section-title');
+    if (title) title.classList.toggle('section-title-done', activeScheduled.length > 0 && doneCount === activeScheduled.length);
 
     list.innerHTML = scheduled.map((habit) => {
+        if (habit.paused) {
+            return `
+                <li class="habit habit-paused" data-habit-id="${habit.id}" data-action="open-detail">
+                    <div class="habit-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
+                    <div class="habit-info">
+                        <h3 class="habit-name">${escapeHtml(habit.name)}</h3>
+                        <p class="habit-streak">Paused</p>
+                    </div>
+                    <button class="habit-check" data-action="habit-toggle">
+                        <span class="habit-check-circle"></span>
+                    </button>
+                </li>
+            `;
+        }
+
         const todayEntry = habit.entries[todayKey];
         const isDone = todayEntry === 'done';
         const streak = calculateStreak(habit);
 
+        const stateClass = isDone ? 'habit-done' : '';
+        const subLabel = streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : '';
+
         return `
-            <li class="habit ${isDone ? 'habit-done' : ''}" data-habit-id="${habit.id}" data-action="open-detail">
+            <li class="habit ${stateClass}" data-habit-id="${habit.id}" data-action="open-detail">
                 <div class="habit-icon" style="background-color: ${pickers.colorToBg(habit.color)};">${habit.icon}</div>
                 <div class="habit-info">
                     <h3 class="habit-name">${escapeHtml(habit.name)}</h3>
-                    ${streak > 0 ? `<p class="habit-streak">${streak} day streak</p>` : ''}
+                    ${subLabel}
                 </div>
                 <button class="habit-check ${isDone ? 'habit-check-done' : ''}" data-action="habit-toggle">
-                    ${isDone ? '<img src="icons/check.svg" alt="Done">' : ''}
+                    <span class="habit-check-circle">${isDone ? '<img src="icons/check.svg" alt="Done">' : ''}</span>
                 </button>
             </li>
         `;
@@ -239,18 +363,34 @@ function renderBinaries(binaries) {
 function calculateStreak(habit) {
     let streak = 0;
     const today = new Date();
+    const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
-    for (let i = 0; i < 365; i++) {
+    const todayKey = formatDateKey(today);
+    const todayEntry = habit.entries[todayKey];
+    const todayTarget = getEffectiveTarget(habit, todayKey);
+    const todayDone = habit.limitMode
+        ? (typeof todayEntry === 'number' && todayEntry > 0 && todayEntry <= todayTarget)
+        : (todayEntry === 'done' || (typeof todayEntry === 'number' && todayEntry >= todayTarget));
+    const startOffset = todayDone ? 0 : 1;
+
+    for (let i = startOffset; i < 365; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() - i);
 
+        const dayKey = dayKeys[date.getDay()];
+        if (!habit.schedule.includes(dayKey)) continue;
+        if (isInPauseWindow(habit, date)) continue;
+
         const key = formatDateKey(date);
         const entry = habit.entries[key];
+        const target = getEffectiveTarget(habit, key);
+        const isSkipped = entry === 'Skipped';
+        const isDone = habit.limitMode
+            ? (typeof entry === 'number' && entry > 0 && entry <= target)
+            : (entry === 'done' || (typeof entry === 'number' && entry >= target));
 
-        const isDone = entry === 'done' || (typeof entry === 'number' && entry >= (habit.target || 1));
-
-        if (isDone) {
-            streak++;
+        if (isDone || isSkipped) {
+            if (isDone) streak++;
         } else {
             break;
         }
@@ -285,8 +425,174 @@ function escapeHtml(str) {
 }
 
 
+function updateBinary(habitId) {
+    const habit = storage.getHabit(habitId);
+    if (!habit) return;
+
+    const li = document.querySelector(`[data-screen="main"] [data-habit-id="${habitId}"]`);
+    if (!li) return;
+
+    const today = storage.getTodayString();
+    const todayEntry = habit.entries[today];
+    const isDone = todayEntry === 'done';
+    const streak = calculateStreak(habit);
+
+    li.className = `habit${isDone ? ' habit-done' : ''}`;
+
+    const checkBtn = li.querySelector('.habit-check');
+    if (checkBtn) {
+        checkBtn.className = `habit-check${isDone ? ' habit-check-done' : ''}`;
+        const circle = checkBtn.querySelector('.habit-check-circle');
+        if (circle) circle.innerHTML = isDone ? '<img src="icons/check.svg" alt="Done">' : '';
+    }
+
+    const infoEl = li.querySelector('.habit-info');
+    if (infoEl) {
+        let streakEl = infoEl.querySelector('.habit-streak');
+        if (streak > 0) {
+            if (!streakEl) {
+                streakEl = document.createElement('p');
+                streakEl.className = 'habit-streak';
+                infoEl.appendChild(streakEl);
+            }
+            streakEl.textContent = `${streak} day streak`;
+        } else if (streakEl) {
+            streakEl.remove();
+        }
+    }
+
+    const todaySection = document.querySelector('[data-screen="main"] .today');
+    if (todaySection) {
+        const allHabits = storage.getHabits().filter((h) => !h.archived);
+        const todayDayKey = getTodayDayKey();
+        const scheduled = allHabits.filter(h => h.type === 'binary' && h.schedule.includes(todayDayKey) && !h.paused);
+        const doneCount = scheduled.filter(h => h.entries[today] === 'done').length;
+        const metaEl = todaySection.querySelector('.section-meta');
+        if (metaEl) metaEl.textContent = `${doneCount} of ${scheduled.length} done`;
+        const titleEl = todaySection.querySelector('.section-title');
+        if (titleEl) titleEl.classList.toggle('section-title-done', scheduled.length > 0 && doneCount === scheduled.length);
+    }
+
+    renderLast5Days(storage.getHabits().filter((h) => !h.archived));
+    checkAllDone();
+}
+
+
+function updateCounter(habitId) {
+    const habit = storage.getHabit(habitId);
+    if (!habit) return;
+
+    const li = document.querySelector(`[data-screen="main"] [data-habit-id="${habitId}"]`);
+    if (!li) return;
+
+    const today = storage.getTodayString();
+    const rawValue = habit.entries[today];
+    const value = typeof rawValue === 'number' ? rawValue : 0;
+    const target = getEffectiveTarget(habit, today);
+    const percent = Math.min(100, (value / target) * 100);
+    const isComplete = !habit.limitMode && value >= target;
+    const isOverLimit = !!habit.limitMode && value > target;
+
+    const valueEl = li.querySelector('.counter-value');
+    if (valueEl) {
+        if (habit.paused) {
+            valueEl.textContent = 'Paused';
+            valueEl.className = 'counter-value counter-value-skipped';
+        } else {
+            valueEl.textContent = value;
+            valueEl.className = 'counter-value';
+        }
+    }
+
+    const fill = li.querySelector('.counter-bar-fill');
+    if (fill) fill.style.width = (habit.paused ? 0 : percent) + '%';
+
+    const minusBtn = li.querySelector('.counter-btn-minus');
+    if (minusBtn) minusBtn.disabled = value <= 0;
+
+    li.classList.toggle('counter-limit', !!habit.limitMode);
+    li.classList.toggle('counter-done', isComplete && !habit.paused);
+    li.classList.toggle('counter-over-limit', isOverLimit && !habit.paused);
+    li.classList.remove('counter-skipped');
+    li.classList.toggle('counter-paused', !!habit.paused);
+
+    const info = li.querySelector('.counter-header-info');
+    if (info) {
+        const streak = calculateStreak(habit);
+        let streakEl = info.querySelector('.counter-streak');
+        if (streak > 0) {
+            if (!streakEl) {
+                streakEl = document.createElement('p');
+                streakEl.className = 'counter-streak';
+                info.appendChild(streakEl);
+            }
+            streakEl.textContent = `${streak} day streak`;
+        } else if (streakEl) {
+            streakEl.remove();
+        }
+    }
+
+    const countersSection = document.querySelector('[data-screen="main"] .counters');
+    if (countersSection) {
+        const allHabits = storage.getHabits().filter(h => !h.archived);
+        const todayDayKey = getTodayDayKey();
+        const scheduledCounters = allHabits.filter(h => h.type === 'counter' && !h.paused && h.schedule.includes(todayDayKey));
+        const allDone = scheduledCounters.length > 0 && scheduledCounters.every(h => {
+            const v = h.entries[today];
+            if (h.limitMode) return typeof v === 'number' && v > 0 && v <= getEffectiveTarget(h, today);
+            return typeof v === 'number' && v >= getEffectiveTarget(h, today);
+        });
+        const counterTitle = countersSection.querySelector('.section-title');
+        if (counterTitle) counterTitle.classList.toggle('section-title-done', allDone);
+    }
+
+    checkAllDone();
+}
+
+
+let _tooltipTimer = null;
+
+function hideMoodTooltip() {
+    const tip = document.getElementById('mood-tooltip');
+    if (tip) tip.classList.remove('mood-tooltip-visible');
+    clearTimeout(_tooltipTimer);
+    window.removeEventListener('scroll', hideMoodTooltip);
+}
+
+function showMoodTooltip(anchor, text) {
+    let tip = document.getElementById('mood-tooltip');
+    if (!tip) {
+        tip = document.createElement('div');
+        tip.id = 'mood-tooltip';
+        tip.className = 'mood-tooltip';
+        document.body.appendChild(tip);
+    }
+    tip.textContent = text;
+    const rect = anchor.getBoundingClientRect();
+    tip.style.left = (rect.left + rect.width / 2) + 'px';
+    tip.style.top = rect.top + 'px';
+    tip.classList.add('mood-tooltip-visible');
+    clearTimeout(_tooltipTimer);
+    _tooltipTimer = setTimeout(hideMoodTooltip, 2500);
+    window.addEventListener('scroll', hideMoodTooltip, { once: true, passive: true });
+}
+
+
+function refreshMoods() {
+    renderLast5Days(storage.getHabits().filter((h) => !h.archived));
+}
+
 window.render = {
     main: renderMainScreen,
     counters: renderCounters,
-    binaries: renderBinaries
+    binaries: renderBinaries,
+    updateBinary: updateBinary,
+    updateCounter: updateCounter,
+    refreshMoods: refreshMoods,
+    showMoodTooltip: showMoodTooltip,
+    hideMoodTooltip: hideMoodTooltip,
+    checkAllDone: checkAllDone,
+    parseLocalDate: parseLocalDate,
+    isInPauseWindow: isInPauseWindow,
+    escapeHtml: escapeHtml,
 };
