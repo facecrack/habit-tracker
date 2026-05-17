@@ -277,7 +277,12 @@ function getTodayString() {
 
 function clearAllEntries() {
     const data = loadData();
-    data.habits.forEach(h => { h.entries = {}; });
+    const today = getTodayString();
+    data.habits.forEach(h => {
+        h.entries = {};
+        h.createdAt = today;
+        if (h.dailyOverrides) h.dailyOverrides = {};
+    });
     saveData(data);
 }
 
