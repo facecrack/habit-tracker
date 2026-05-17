@@ -73,7 +73,7 @@ function renderStatWeeklyCard(habit) {
         const dayDate = day.date;
         const isBeforeCreated = dayDate < created;
         const isFuture = dayDate > today;
-        const t = habit.target || 1;
+        const t = getEffectiveTarget(habit, day.key);
         const isDone = habit.limitMode
             ? (typeof entry === 'number' && entry > 0 && entry <= t)
             : (entry === 'done' || (typeof entry === 'number' && entry >= t));
@@ -228,7 +228,7 @@ function renderHeatmap12Weeks(habit) {
             const isBeforeCreated = cellDate < created;
             const dayKey = dayKeys[(cellDate.getDay() + 6) % 7];
             const isHabitDay = habit.schedule.includes(dayKey);
-            const t = habit.target || 1;
+            const t = getEffectiveTarget(habit, cellKey);
             const isDone = habit.limitMode
                 ? (typeof entry === 'number' && entry > 0 && entry <= t)
                 : (entry === 'done' || (typeof entry === 'number' && entry >= t));
@@ -272,8 +272,8 @@ function calculateSummary(habits) {
         const streak = calculateBestStreak(habit);
         if (streak > bestStreak) bestStreak = streak;
 
-        Object.values(habit.entries).forEach((entry) => {
-            const t = habit.target || 1;
+        Object.entries(habit.entries).forEach(([key, entry]) => {
+            const t = getEffectiveTarget(habit, key);
             const isDone = habit.limitMode
                 ? (typeof entry === 'number' && entry > 0 && entry <= t)
                 : (entry === 'done' || (typeof entry === 'number' && entry >= t));
@@ -300,7 +300,6 @@ function calculateSuccessPercent(habit) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const created = parseLocalDate(habit.createdAt);
-    const target = habit.target || 1;
 
     let scheduledDays = 0;
     let doneDays = 0;
@@ -315,6 +314,7 @@ function calculateSuccessPercent(habit) {
             const isSkipped = entry === 'Skipped';
             if (!isSkipped) {
                 scheduledDays++;
+                const target = getEffectiveTarget(habit, key);
                 const isDone = habit.limitMode
                     ? (typeof entry === 'number' && entry > 0 && entry <= target)
                     : (entry === 'done' || (typeof entry === 'number' && entry >= target));
@@ -333,7 +333,6 @@ function calculateBestStreak(habit) {
     let temp = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const target = habit.target || 1;
     const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
     for (let i = 365; i >= 0; i--) {
@@ -345,6 +344,7 @@ function calculateBestStreak(habit) {
         const key = formatDateKey(d);
         const entry = habit.entries[key];
         const isSkipped = entry === 'Skipped';
+        const target = getEffectiveTarget(habit, key);
         const isDone = habit.limitMode
             ? (typeof entry === 'number' && entry > 0 && entry <= target)
             : (entry === 'done' || (typeof entry === 'number' && entry >= target));
